@@ -228,17 +228,6 @@ tr:hover td{background:rgba(255,255,255,.025)}
 <div class="ld" id="ld"><div class="spin"></div><div style="font-size:13px;color:var(--muted)">Firebase bağlanıyor...</div></div>
 <div class="toast" id="toast"></div>
 
-<!-- HEADER -->
-<div class="hdr">
-  <img id="hdrLogo" src="" alt="">
-  <div class="hdr-title">Dünya Ambalaj &ndash; <span>Fuar Tahsilat</span></div>
-  <div class="fb-pill"><div class="dot" id="fbDot"></div><span id="fbTxt">Bağlanıyor…</span></div>
-  <input type="file" id="xlsIn" accept=".xlsx,.xls,.csv" style="display:none" onchange="importExcel(this)">
-  <button class="btn btn-ghost" onclick="document.getElementById('xlsIn').click()">📥 Excel</button>
-  <button class="btn btn-ghost" onclick="exportExcel()">📤 Dışa Aktar</button>
-  <button class="btn btn-orange" onclick="openModal()">+ Yeni</button>
-</div>
-
 <!-- TABS -->
 <div class="tabs">
   <div class="tab active" onclick="goTab(0,this)">📋 Müşteriler</div>
