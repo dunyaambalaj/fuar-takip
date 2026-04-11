@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dünya Ambalaj - Antalya Fuar Tahsilat</title>
+<title>Dünya Ambalaj - Fuar Tahsilat</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -164,13 +164,15 @@ tr:hover td{background:rgba(255,255,255,.025)}
 .mu-foot .btn{flex:1;min-width:0;justify-content:center}
 
 /* ============ BİLDİRİM ============ */
-.bd-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:1100;align-items:flex-end;justify-content:center;padding:0}
+.bd-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:1100;align-items:flex-end;justify-content:center;padding:0;overflow-y:auto}
 .bd-overlay.open{display:flex}
-@media(min-width:600px){.bd-overlay{align-items:center;padding:16px}}
-.bd-wrap{display:flex;flex-direction:column;gap:10px;width:100%;max-width:400px}
-.bd-card{background:#fff;border-radius:14px 14px 0 0;overflow:hidden;color:#111}
-@media(min-width:600px){.bd-card{border-radius:14px}}
-.bd-hdr{background:linear-gradient(135deg,#07111f,#1565C0);color:#fff;padding:13px 16px;display:flex;align-items:center;gap:10px}
+@media(min-width:600px){.bd-overlay{align-items:flex-start;padding:20px;justify-content:center}}
+.bd-wrap{display:flex;flex-direction:column;gap:0;width:100%;max-width:420px;margin:0 auto}
+@media(min-width:600px){.bd-wrap{margin:auto}}
+/* bd-card: tam içerik, kesilmez */
+.bd-card{background:#fff;border-radius:14px 14px 0 0;color:#111;overflow:visible}
+@media(min-width:600px){.bd-card{border-radius:14px 14px 0 0}}
+.bd-hdr{background:linear-gradient(135deg,#07111f,#1565C0);color:#fff;padding:13px 16px;display:flex;align-items:center;gap:10px;border-radius:14px 14px 0 0}
 .bd-hdr img{height:36px;border-radius:4px}
 .bd-hdr h3{font-size:12px;font-weight:800;margin:0}
 .bd-hdr p{font-size:10px;opacity:.75;margin:2px 0 0}
@@ -186,16 +188,15 @@ tr:hover td{background:rgba(255,255,255,.025)}
 .bd-tutar .tl{font-size:10px;opacity:.75;text-transform:uppercase;letter-spacing:.5px}
 .bd-tutar .tv{font-size:26px;font-weight:900;margin:2px 0}
 .bd-foot{padding:8px 16px;background:#f8f9ff;display:flex;justify-content:space-between;font-size:10px;color:#888;border-top:1px solid #e5e7eb}
-.bd-acts{display:flex;gap:6px;flex-wrap:wrap;background:var(--card);padding:9px;border-radius:0 0 14px 14px;border:1px solid var(--border);border-top:none}
-@media(min-width:600px){.bd-acts{border-radius:10px;border-top:1px solid var(--border)}}
+.bd-acts{display:flex;gap:6px;flex-wrap:wrap;background:var(--card);padding:9px;border:1px solid var(--border);border-top:none;position:sticky;bottom:0;z-index:2}
 .bd-acts .btn{flex:1;min-width:80px;font-size:11px;justify-content:center}
 
 /* MÜŞTERİ BİLDİRİMİ (toplu, firma listeli) */
-.bd-firma-list{margin:8px 0}
-.bd-firma-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;font-size:12px}
+.bd-firma-list{margin:6px 0}
+.bd-firma-row{display:flex;align-items:flex-start;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eee;gap:6px}
 .bd-firma-row:last-of-type{border-bottom:none}
-.bd-firma-row .fname{color:#1565C0;font-weight:600}
-.bd-firma-row .famt{font-weight:700}
+.bd-firma-row .fname{color:#1565C0;font-weight:700;font-size:13px;line-height:1.3}
+.bd-firma-row .famt{font-weight:800;font-size:13px;color:#111;white-space:nowrap}
 
 .toast{position:fixed;bottom:18px;right:18px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;z-index:9999;display:none;max-width:290px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
 .toast.show{display:block}
@@ -274,7 +275,7 @@ tr:hover td{background:rgba(255,255,255,.025)}
     <div class="tbl-toolbar">
       <span id="rowCount">0 kayıt</span>
       <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--muted)">
-        <input type="checkbox" id="groupByMusteri" onchange="renderTable()" style="width:auto;flex:none"> Müşteri Bazlı Grupla
+        <input type="checkbox" id="groupByMusteri" onchange="renderTable()" style="width:auto;flex:none" checked> Müşteri Bazlı Grupla
       </label>
     </div>
 
@@ -396,7 +397,11 @@ service cloud.firestore {
       <div class="fgrp"><label>İl</label><input id="fIl" placeholder="Şehir" list="ilList"><datalist id="ilList"></datalist></div>
       <div class="fgrp"><label>İlçe</label><input id="fIlc" placeholder="İlçe"></div>
       <div class="fgrp"><label>Ödeme Durumu</label>
-        <select id="fDu"><option>Beklemede</option><option>Ödendi</option><option>İptal</option></select></div>
+        <select id="fDu">
+          <option value="Beklemede">Beklemede</option>
+          <option value="Ödendi">Ödendi</option>
+          <option value="İptal">İptal</option>
+        </select></div>
       <div class="fgrp"><label>Tarih</label><input id="fTar" type="date"></div>
       <div class="fgrp full"><label>Notlar</label><textarea id="fNo" placeholder="Ek bilgi…"></textarea></div>
     </div>
@@ -450,7 +455,7 @@ service cloud.firestore {
       <div class="bd-foot"><span>DÜNYA AMBALAJ SAN. TİC. A.Ş.</span><span id="bdDate"></span></div>
     </div>
     <div class="bd-acts">
-      <button class="btn btn-accent" onclick="dlPNG()">📥 PNG</button>
+      <button class="btn btn-accent" onclick="dlPNG()">📥 JPEG</button>
       <button class="btn btn-orange" onclick="dlPDF()">📄 PDF</button>
       <button class="btn btn-green" onclick="waShare()">🟢 WhatsApp</button>
       <button class="btn btn-ghost" onclick="closeBd()">✕</button>
@@ -511,13 +516,32 @@ async function quickPay(id,e){
   if(e)e.stopPropagation();
   if(!db)return;
   const r=data.find(d=>d.id===id);if(!r)return;
-  const nxt=r.odemeDurumu==='Ödendi'?'Beklemede':'Ödendi';
-  if(!confirm(`"${r.musteriAdi}" → "${nxt}" yapılsın mı?`))return;
-  try{await db.collection('kayitlar').doc(id).update({odemeDurumu:nxt,guncelleme:new Date().toISOString()});toast(`Durum: ${nxt} ✓`,'success');}
-  catch(e){toast('Güncelleme hatası','error');}
+  // 3 seçenek sun — mevcut durumu hariç
+  const seçenekler=['Ödendi','Beklemede','İptal'].filter(s=>s!==r.odemeDurumu);
+  const seçim=seçenekler.length===1?seçenekler[0]:
+    (window.confirm(`"${r.musteriAdi}"\n\n[Tamam] = Ödendi\n[İptal] = ${seçenekler[1]||'Beklemede'}`)?'Ödendi':seçenekler[1]||'Beklemede');
+  if(!confirm(`"${r.musteriAdi}" → "${seçim}" yapılsın mı?`))return;
+  try{
+    await db.collection('kayitlar').doc(id).update({odemeDurumu:seçim,guncelleme:new Date().toISOString()});
+    toast(`Durum: ${seçim} ✓`,'success');
+  }catch(e){toast('Güncelleme hatası','error');}
 }
 
 // ============ EXCEL ============
+function normStr(s){
+  // Türkçe büyük/küçük harf duyarsız normalize
+  return String(s||'').trim()
+    .toLowerCase()
+    .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
+    .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c')
+    .replace(/\s+/g,'');
+}
+function normDurum(s){
+  const v=normStr(s);
+  if(v==='odendi'||v==='odeme'||v==='tahsil'||v==='tamamlandi'||v==='tamamlandi'||v==='paid')return 'Ödendi';
+  if(v==='iptal'||v==='cancel'||v==='iptal')return 'İptal';
+  return 'Beklemede';
+}
 function importExcel(inp){
   const file=inp.files[0];if(!file)return;
   if(!db){toast('Firebase bağlı değil!','error');inp.value='';return;}
@@ -528,15 +552,31 @@ function importExcel(inp){
       const ws=wb.Sheets[wb.SheetNames[0]];
       const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
       if(rows.length<2){toast('Excel boş','error');return;}
-      const hdrs=rows[0].map(h=>String(h).trim().toLowerCase());
-      const map={musteri:'musteriAdi',müsteri:'musteriAdi',musteriadi:'musteriAdi','müşteri adı':'musteriAdi',firma:'firmaAdi',firmaadi:'firmaAdi','firma adı':'firmaAdi',temsilci:'temsilci',il:'il',ilce:'ilce',ilçe:'ilce',tutar:'tutar',fiyat:'tutar',durum:'odemeDurumu',odemedurum:'odemeDurumu','ödeme durumu':'odemeDurumu',tarih:'tarih',notlar:'notlar',not:'notlar'};
+      // Başlıkları normalize et — Türkçe karakter + boşluk duyarsız
+      const hdrs=rows[0].map(h=>normStr(h));
+      const map={
+        musteri:'musteriAdi',musteriad:'musteriAdi',musteriadisoyadi:'musteriAdi','musteriadisoyadi':'musteriAdi','adsoyad':'musteriAdi','adisoyadi':'musteriAdi',
+        firma:'firmaAdi',firmaad:'firmaAdi','firmaadi':'firmaAdi',
+        temsilci:'temsilci','musteriTemsilcisi':'temsilci',mustemsilci:'temsilci',
+        il:'il','sehir':'il',sehir:'il',
+        ilce:'ilce','ilce':'ilce',
+        tutar:'tutar',fiyat:'tutar','satis':'tutar',miktar:'tutar',
+        durum:'odemeDurumu','odemedurum':'odemeDurumu','odeme':'odemeDurumu',
+        tarih:'tarih',tarih:'tarih',
+        notlar:'notlar',not:'notlar','aciklama':'notlar'
+      };
       const cols=hdrs.map(h=>map[h]||h);
       let cnt=0;showLd(true);
       for(let i=1;i<rows.length;i++){
         const r=rows[i];if(!r||!r.some(c=>String(c).trim()))continue;
         const rec={musteriAdi:'',firmaAdi:'',temsilci:'',il:'',ilce:'',tutar:0,odemeDurumu:'Beklemede',tarih:today(),notlar:'',olusturma:new Date().toISOString(),guncelleme:new Date().toISOString()};
-        cols.forEach((f,j)=>{if(rec.hasOwnProperty(f))rec[f]=String(r[j]||''). trim();});
-        rec.tutar=parseFloat(rec.tutar)||0;
+        cols.forEach((f,j)=>{
+          if(!rec.hasOwnProperty(f))return;
+          const val=String(r[j]||'').trim();
+          if(f==='odemeDurumu')rec[f]=normDurum(val);
+          else rec[f]=val;
+        });
+        rec.tutar=parseFloat(String(rec.tutar).replace(',','.'))||0;
         if(!rec.musteriAdi&&!rec.firmaAdi)continue;
         await db.collection('kayitlar').add(rec);cnt++;
       }
@@ -586,13 +626,13 @@ function updateFilters(){
   updSel('ff',fir,'Tüm Firmalar');updSel('ft',tem,'Tüm Temsilciler');updSel('fi',il,'Tüm İller');
   updDL('fiList',fir);updDL('teList',tem);updDL('ilList',ILLER);
 }
-function updSel(id,items,ph){const el=document.getElementById(id),cv=el.value;el.innerHTML=`<option value="">${ph}</option>`+items.map(i=>`<option${i===cv?' selected':''}>  ${esc(i)}</option>`).join('');}
+function updSel(id,items,ph){const el=document.getElementById(id),cv=el.value;el.innerHTML=`<option value="">${ph}</option>`+items.map(i=>`<option value="${esc(i)}"${i===cv?' selected':''}>${esc(i)}</option>`).join('');}
 function updDL(id,items){document.getElementById(id).innerHTML=items.map(i=>`<option value="${esc(i)}">`).join('');}
 
 function getFiltered(){
-  const a=(v('fa')||'').toLowerCase(),fi=v('ff'),te=v('ft'),du=v('fd'),il=v('fi');
+  const a=normStr(v('fa')||''),fi=v('ff'),te=v('ft'),du=v('fd'),il=v('fi');
   let rows=[...data];
-  if(a)rows=rows.filter(r=>[r.musteriAdi,r.firmaAdi,r.temsilci,r.il,r.ilce].some(x=>(x||'').toLowerCase().includes(a)));
+  if(a)rows=rows.filter(r=>[r.musteriAdi,r.firmaAdi,r.temsilci,r.il,r.ilce].some(x=>normStr(x||'').includes(a)));
   if(fi)rows=rows.filter(r=>r.firmaAdi===fi);
   if(te)rows=rows.filter(r=>r.temsilci===te);
   if(du)rows=rows.filter(r=>r.odemeDurumu===du);
@@ -930,8 +970,28 @@ function closeDetail(id){
 function openModal(id){
   editId=id||null;
   document.getElementById('mTitle').textContent=id?'✏ Kaydı Düzenle':'+ Yeni Kayıt';
-  if(id){const r=data.find(d=>d.id===id);if(r){sv('fMu',r.musteriAdi);sv('fFi',r.firmaAdi);sv('fTe',r.temsilci);sv('fTu',r.tutar);sv('fIl',r.il);sv('fIlc',r.ilce);sv('fDu',r.odemeDurumu||'Beklemede');sv('fTar',r.tarih);sv('fNo',r.notlar);}}
-  else{['fMu','fFi','fTe','fTu','fIl','fIlc','fNo'].forEach(i=>sv(i,''));sv('fDu','Beklemede');sv('fTar',today());}
+  if(id){
+    const r=data.find(d=>d.id===id);
+    if(r){
+      sv('fMu',r.musteriAdi);sv('fFi',r.firmaAdi);sv('fTe',r.temsilci);
+      sv('fTu',r.tutar);sv('fIl',r.il);sv('fIlc',r.ilce);
+      sv('fTar',r.tarih);sv('fNo',r.notlar);
+      // Durum: 'Ödendi', 'Beklemede', 'İptal' — value ile eşleştir
+      const fDu=document.getElementById('fDu');
+      const dur=r.odemeDurumu||'Beklemede';
+      // Tüm option'ları kontrol et, value veya text eşleşiyor mu
+      let found=false;
+      for(let i=0;i<fDu.options.length;i++){
+        if(fDu.options[i].value===dur||fDu.options[i].text===dur){
+          fDu.selectedIndex=i;found=true;break;
+        }
+      }
+      if(!found)fDu.selectedIndex=0;
+    }
+  }else{
+    ['fMu','fFi','fTe','fTu','fIl','fIlc','fNo'].forEach(i=>sv(i,''));
+    sv('fDu','Beklemede');sv('fTar',today());
+  }
   document.getElementById('kayitModal').classList.add('open');
 }
 function editRec(id){openModal(id);}
@@ -964,33 +1024,85 @@ function muBildiriByName(musteriAdi){
   if(!items.length)return;
   bdMode='musteri';bdSingleRec={musteriAdi,items};
   const toplam=items.reduce((s,r)=>s+(r.tutar||0),0);
+  const bekleyen=items.filter(r=>r.odemeDurumu==='Beklemede').reduce((s,r)=>s+(r.tutar||0),0);
   const ilRow=items[0];
+  // Firma başına grupla: birden fazla kayıt varsa alt satır göster
   const firmaMap={};
-  items.forEach(r=>{const f=r.firmaAdi||'Bilinmiyor';if(!firmaMap[f])firmaMap[f]={toplam:0,durum:'Ödendi'};firmaMap[f].toplam+=(r.tutar||0);if(r.odemeDurumu!=='Ödendi')firmaMap[f].durum=r.odemeDurumu;});
+  items.forEach(r=>{
+    const f=r.firmaAdi||'Bilinmiyor';
+    if(!firmaMap[f])firmaMap[f]={toplam:0,durumlar:[],tarih:r.tarih||''};
+    firmaMap[f].toplam+=(r.tutar||0);
+    firmaMap[f].durumlar.push(r.odemeDurumu||'Beklemede');
+  });
+  const durumRenkW=(d)=>{const c={Ödendi:'#16a34a',Beklemede:'#d97706',İptal:'#dc2626'};return `<span style="font-size:10px;font-weight:700;color:${c[d]||c.Beklemede};background:${c[d]||c.Beklemede}22;padding:1px 6px;border-radius:10px">${d}</span>`;};
+  const firmaRows=Object.entries(firmaMap).map(([f,d])=>{
+    // Birden fazla durum varsa hepsini göster, tek ise sadece biri
+    const durumsUniq=[...new Set(d.durumlar)];
+    const durBadges=durumsUniq.map(durumRenkW).join(' ');
+    return `<div class="bd-firma-row">
+      <div style="flex:1"><span class="fname">${esc(f)}</span><br><span style="font-size:10px;color:#888">${durBadges}</span></div>
+      <span class="famt" style="flex-shrink:0;padding-left:8px">${fmt(d.toplam)}</span>
+    </div>`;
+  }).join('');
   document.getElementById('bdSubtitle').textContent='Müşteri Tahsilat Özeti';
   document.getElementById('bdDate').textContent=new Date().toLocaleDateString('tr-TR');
-  const firmaRows=Object.entries(firmaMap).map(([f,d])=>`<div class="bd-firma-row"><span class="fname">${esc(f)}</span><span class="famt">${fmt(d.toplam)}</span></div>`).join('');
   document.getElementById('bdBody').innerHTML=`
-    <div class="bd-fbox"><h4>${esc(musteriAdi)}</h4><p>${esc([ilRow.temsilci,ilRow.il].filter(Boolean).join(' · ')||'–')}</p></div>
-    <div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Satın Alınan Firmalar</div>
+    <div class="bd-fbox">
+      <h4>${esc(musteriAdi)}</h4>
+      <p>${esc([ilRow.temsilci,[ilRow.il,ilRow.ilce].filter(Boolean).join('/')]
+        .filter(Boolean).join(' · ')||'–')}</p>
+    </div>
+    <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">
+      Satın Alınan Firmalar (${Object.keys(firmaMap).length} firma · ${items.length} alım)
+    </div>
     <div class="bd-firma-list">${firmaRows}</div>
-    <div class="bd-tutar"><div class="tl">Tahsilat Toplamı</div><div class="tv">${fmt(toplam)}</div></div>
-    <div style="text-align:center;font-size:11px;color:#555;margin-top:4px">${items.length} alım · ${Object.keys(firmaMap).length} firma</div>`;
+    <div class="bd-tutar">
+      <div class="tl">Tahsilat Toplamı</div>
+      <div class="tv">${fmt(toplam)}</div>
+    </div>
+    ${bekleyen>0?`<div style="text-align:center;background:#fffbeb;border:1px solid #fbbf24;border-radius:8px;padding:8px;margin-top:6px;font-size:12px;color:#92400e;font-weight:700">⏳ Bekleyen: ${fmt(bekleyen)}</div>`:''}`;
   document.getElementById('bdOverlay').classList.add('open');
-  // Eğer müşteri detay açıksa kapat
   closeMuDetail();
 }
 
 function closeBd(){document.getElementById('bdOverlay').classList.remove('open');}
 
 async function dlPNG(){
+  // A4 oranlı JPEG çıktı: 794px genişlik (96dpi A4), tam içerik yüksekliği
+  const card=document.getElementById('bdCard');
   try{
-    const canvas=await html2canvas(document.getElementById('bdCard'),{scale:2,useCORS:true,backgroundColor:'#fff',logging:false});
+    // Önce orijinal genişliği sakla
+    const origWidth=card.style.width;
+    const origMaxH=card.style.maxHeight;
+    // A4 genişliğine zorla (794px = 210mm @ 96dpi)
+    card.style.width='794px';
+    card.style.maxHeight='none';
+    // Scroll yüksekliğini al (tüm içerik)
+    const fullH=card.scrollHeight;
+    const canvas=await html2canvas(card,{
+      scale:2,
+      useCORS:true,
+      backgroundColor:'#ffffff',
+      logging:false,
+      width:794,
+      height:fullH,
+      windowWidth:794,
+      windowHeight:fullH
+    });
+    // Eski stillere geri dön
+    card.style.width=origWidth;
+    card.style.maxHeight=origMaxH;
     const a=document.createElement('a');
     const name=(bdMode==='musteri'?bdSingleRec.musteriAdi:bdSingleRec?.musteriAdi||'bildirim').replace(/\s+/g,'_');
-    a.download='dunya_ambalaj_'+name+'.png';a.href=canvas.toDataURL('image/png');a.click();
-    toast('PNG indirildi ✓','success');
-  }catch(e){toast('PNG hatası: '+e.message,'error');}
+    a.download='dunya_ambalaj_'+name+'.jpg';
+    a.href=canvas.toDataURL('image/jpeg',0.92);
+    a.click();
+    toast('JPEG indirildi ✓','success');
+  }catch(e){
+    // Stil sıfırla hata durumunda da
+    card.style.width='';card.style.maxHeight='';
+    toast('JPEG hatası: '+e.message,'error');
+  }
 }
 
 async function dlPDF(){
@@ -1076,12 +1188,17 @@ async function waShare(){
   const url='https://wa.me/?text='+encodeURIComponent(txt);
   if(navigator.share&&navigator.canShare){
     try{
-      const canvas=await html2canvas(document.getElementById('bdCard'),{scale:2,useCORS:true,backgroundColor:'#fff',logging:false});
+      const card=document.getElementById('bdCard');
+      const origW=card.style.width,origMH=card.style.maxHeight;
+      card.style.width='794px';card.style.maxHeight='none';
+      const fH=card.scrollHeight;
+      const canvas=await html2canvas(card,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,width:794,height:fH,windowWidth:794,windowHeight:fH});
+      card.style.width=origW;card.style.maxHeight=origMH;
       canvas.toBlob(async blob=>{
-        const file=new File([blob],'bildirim.png',{type:'image/png'});
+        const file=new File([blob],'bildirim.jpg',{type:'image/jpeg'});
         if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Dünya Ambalaj Tahsilat'});}
         else window.open(url,'_blank');
-      });
+      },'image/jpeg',0.92);
     }catch{window.open(url,'_blank');}
   }else window.open(url,'_blank');
 }
