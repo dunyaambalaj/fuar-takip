@@ -408,11 +408,19 @@ service cloud.firestore {
       <div class="fgrp"><label>Tutar (₺)</label><input id="fTu" type="number" placeholder="0" step="0.01" min="0"></div>
       <div class="fgrp"><label>İl</label><input id="fIl" placeholder="Şehir" list="ilList"><datalist id="ilList"></datalist></div>
       <div class="fgrp"><label>İlçe</label><input id="fIlc" placeholder="İlçe"></div>
+      <div class="fgrp"><label>Cari No</label><input id="fCno" placeholder="Müşteri cari no"></div>
       <div class="fgrp"><label>Ödeme Durumu</label>
         <select id="fDu">
           <option value="Beklemede">Beklemede</option>
-          <option value="Ödendi">Ödendi</option>
+          <option value="Tahsil Edildi">Tahsil Edildi</option>
           <option value="İptal">İptal</option>
+        </select></div>
+      <div class="fgrp"><label>Ödeme Türü</label>
+        <select id="fOdTu">
+          <option value="Nakit">Nakit</option>
+          <option value="Tek Çekim">Tek Çekim</option>
+          <option value="Taksitli Çekim">Taksitli Çekim</option>
+          <option value="Vadeli">Vadeli</option>
         </select></div>
       <div class="fgrp"><label>Tarih</label><input id="fTar" type="date"></div>
       <div class="fgrp full"><label>Notlar</label><textarea id="fNo" placeholder="Ek bilgi…"></textarea></div>
@@ -511,7 +519,7 @@ async function saveRecord(){
   if(!db){toast('Firebase bağlı değil!','error');return;}
   const mu=v('fMu'),fi=v('fFi');
   if(!mu||!fi){toast('Müşteri Adı ve Firma zorunlu!','error');return;}
-  const rec={musteriAdi:mu,firmaAdi:fi,temsilci:v('fTe'),tutar:parseFloat(v('fTu'))||0,il:v('fIl'),ilce:v('fIlc'),odemeDurumu:v('fDu')||'Beklemede',tarih:v('fTar')||today(),notlar:v('fNo'),guncelleme:new Date().toISOString()};
+  const rec={musteriAdi:mu,firmaAdi:fi,temsilci:v('fTe'),tutar:parseFloat(v('fTu'))||0,il:v('fIl'),ilce:v('fIlc'),odemeDurumu:v('fDu')||'Beklemede',tarih:v('fTar')||today(),notlar:v('fNo'),cariNo:v('fCno'),odemeTuru:v('fOdTu')||'Nakit',guncelleme:new Date().toISOString()};
   try{
     if(editId){await db.collection('kayitlar').doc(editId).update(rec);toast('Güncellendi ✓','success');}
     else{await db.collection('kayitlar').add({...rec,olusturma:new Date().toISOString()});toast('Eklendi ✓','success');}
@@ -570,18 +578,21 @@ function importExcel(inp){
         musteri:'musteriAdi',musteriad:'musteriAdi',musteriadisoyadi:'musteriAdi',adsoyad:'musteriAdi',adisoyadi:'musteriAdi',adı:'musteriAdi',adi:'musteriAdi',
         firma:'firmaAdi',firmaad:'firmaAdi',firmaadi:'firmaAdi',firmaismi:'firmaAdi',
         temsilci:'temsilci',musteriTemsilcisi:'temsilci',mustemsilci:'temsilci',temsilcisi:'temsilci',
-        il:'il',sehir:'il',
-        ilce:'ilce',ilcesi:'ilce',
-        tutar:'tutar',fiyat:'tutar',satis:'tutar',miktar:'tutar',tutar:'tutar',tutari:'tutar',
-        durum:'odemeDurumu',odemedurum:'odemeDurumu',odeme:'odemeDurumu',odemestatus:'odemeDurumu',
-        tarih:'tarih',tarih:'tarih',tarihi:'tarih',
-        notlar:'notlar',not:'notlar',aciklama:'notlar',acıklama:'notlar'
+        il:'il',sehir:'il',şehir:'il',ili:'il',ili:'il',
+        ilce:'ilce',ilcesi:'ilce',ilçe:'ilce',ilçesi:'ilce',
+        tutar:'tutar',fiyat:'tutar',satis:'tutar',miktar:'tutar',tutari:'tutar',tutarı:'tutar',
+        durum:'odemeDurumu',odemedurum:'odemeDurumu',odeme:'odemeDurumu',odemestatus:'odemeDurumu',status:'odemeDurumu',
+        tarih:'tarih',tarihi:'tarih',
+        notlar:'notlar',not:'notlar',aciklama:'notlar',acıklama:'notlar',
+        carino:'cariNo',cari:'cariNo',carir:'cariNo',hesapno:'cariNo',
+        odemeTuru:'odemeTuru',odemetipi:'odemeTuru',tipodeme:'odemeTuru',odemet:'odemeTuru',
+        turutahsilat:'odemeTuru',tahasilatturu:'odemeTuru'
       };
       const cols=hdrs.map(h=>map[h]||h);
       let cnt=0;showLd(true);
       for(let i=1;i<rows.length;i++){
         const r=rows[i];if(!r||!r.some(c=>String(c).trim()))continue;
-        const rec={musteriAdi:'',firmaAdi:'',temsilci:'',il:'',ilce:'',tutar:0,odemeDurumu:'Beklemede',tarih:today(),notlar:'',olusturma:new Date().toISOString(),guncelleme:new Date().toISOString()};
+        const rec={musteriAdi:'',firmaAdi:'',temsilci:'',il:'',ilce:'',tutar:0,odemeDurumu:'Beklemede',tarih:today(),notlar:'',cariNo:'',odemeTuru:'Nakit',olusturma:new Date().toISOString(),guncelleme:new Date().toISOString()};
         cols.forEach((f,j)=>{
           if(!rec.hasOwnProperty(f))return;
           const val=String(r[j]||'').trim();
@@ -601,7 +612,7 @@ function importExcel(inp){
 }
 function exportExcel(){
   if(!data.length){toast('Veri yok','error');return;}
-  const rows=data.map(r=>({"Müşteri Adı":r.musteriAdi||'',"Firma Adı":r.firmaAdi||'',"Temsilci":r.temsilci||'',"İl":r.il||'',"İlçe":r.ilce||'',"Tutar":r.tutar||0,"Ödeme Durumu":r.odemeDurumu||'',"Tarih":r.tarih||'',"Notlar":r.notlar||''}));
+  const rows=data.map(r=>({"Müşteri Adı":r.musteriAdi||'',"Firma Adı":r.firmaAdi||'',"Temsilci":r.temsilci||'',"İl":r.il||'',"İlçe":r.ilce||'',"Cari No":r.cariNo||'',"Tutar":r.tutar||0,"Ödeme Durumu":r.odemeDurumu||'',"Ödeme Türü":r.odemeTuru||'Nakit',"Tarih":r.tarih||'',"Notlar":r.notlar||''}));
   const ws=XLSX.utils.json_to_sheet(rows);
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Kayitlar');
   XLSX.writeFile(wb,'dunya_ambalaj_fuar_'+today()+'.xlsx');toast('Excel indirildi ✓','success');
@@ -988,11 +999,10 @@ function openModal(id){
     if(r){
       sv('fMu',r.musteriAdi);sv('fFi',r.firmaAdi);sv('fTe',r.temsilci);
       sv('fTu',r.tutar);sv('fIl',r.il);sv('fIlc',r.ilce);
-      sv('fTar',r.tarih);sv('fNo',r.notlar);
-      // Durum: 'Ödendi', 'Beklemede', 'İptal' — value ile eşleştir
+      sv('fTar',r.tarih);sv('fNo',r.notlar);sv('fCno',r.cariNo);
+      // Ödeme Durumu
       const fDu=document.getElementById('fDu');
       const dur=r.odemeDurumu||'Beklemede';
-      // Tüm option'ları kontrol et, value veya text eşleşiyor mu
       let found=false;
       for(let i=0;i<fDu.options.length;i++){
         if(fDu.options[i].value===dur||fDu.options[i].text===dur){
@@ -1000,10 +1010,20 @@ function openModal(id){
         }
       }
       if(!found)fDu.selectedIndex=0;
+      // Ödeme Türü
+      const fOdTu=document.getElementById('fOdTu');
+      const odt=r.odemeTuru||'Nakit';
+      found=false;
+      for(let i=0;i<fOdTu.options.length;i++){
+        if(fOdTu.options[i].value===odt||fOdTu.options[i].text===odt){
+          fOdTu.selectedIndex=i;found=true;break;
+        }
+      }
+      if(!found)fOdTu.selectedIndex=0;
     }
   }else{
-    ['fMu','fFi','fTe','fTu','fIl','fIlc','fNo'].forEach(i=>sv(i,''));
-    sv('fDu','Beklemede');sv('fTar',today());
+    ['fMu','fFi','fTe','fTu','fIl','fIlc','fNo','fCno'].forEach(i=>sv(i,''));
+    sv('fDu','Beklemede');sv('fOdTu','Nakit');sv('fTar',today());
   }
   document.getElementById('kayitModal').classList.add('open');
 }
