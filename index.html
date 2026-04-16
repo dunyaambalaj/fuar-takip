@@ -335,27 +335,78 @@ tr:hover td{background:rgba(255,255,255,.025)}
 
   <!-- TAB 2: TEMSİLCİLER -->
   <div class="tab-pane" id="p2">
-    <div class="fbar"><input id="fa2" placeholder="🔍 Temsilci ara…" oninput="renderTemsilci()"></div>
-    <div class="cards" id="temCards"></div>
-    <div class="empty" id="emTem" style="display:none"><div>👤</div><p>Temsilci yok.</p></div>
-    <div class="detail-panel" id="temDetail">
-      <div class="detail-hdr">
-        <h4 id="tdTitle">Temsilci Müşterileri</h4>
-        <button class="btn btn-ghost btn-xs" onclick="closeDetail('temDetail')">✕ Kapat</button>
+    <!-- Temsilci Login Paneli -->
+    <div id="temLoginPanel" class="setup-card">
+      <h2 style="color:var(--orange);font-size:17px;margin-bottom:14px">🔐 Temsilci Girişi</h2>
+      <div class="fgrp full"><label>Temsilci Adı</label><input id="temLoginAd" placeholder="Temsilci adınız"></div>
+      <div class="fgrp full"><label>Şifre</label><input id="temLoginPwd" type="password" placeholder="****" onkeypress="if(event.key==='Enter')temsilciLogin()"></div>
+      <div class="m-acts" style="margin-top:14px">
+        <button class="btn btn-accent" onclick="temsilciLogin()" style="flex:1">🔓 Giriş Yap</button>
       </div>
-      <div class="fbar" style="margin-bottom:10px">
-        <select id="tdDurum" onchange="renderTemDetail()"><option value="">Tüm Durumlar</option><option>Ödendi</option><option>Beklemede</option><option>İptal</option></select>
-        <select id="tdFirma" onchange="renderTemDetail()"><option value="">Tüm Firmalar</option></select>
+    </div>
+
+    <!-- Temsilci Dashboard (Giriş Sonrası) -->
+    <div id="temDashboard" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:14px;color:var(--blue);font-weight:700">👤 Giriş yapan: <span id="temName">-</span></div>
+        <button class="btn btn-ghost btn-xs" onclick="temsilciLogout()">🚪 Çıkış</button>
       </div>
-      <div class="tbl-wrap">
-        <table><thead><tr><th>Müşteri</th><th>Firma</th><th>İl/İlçe</th><th>Tutar</th><th>Durum</th><th>İşlemler</th></tr></thead>
-        <tbody id="tdBody"></tbody></table>
+      <div class="fbar">
+        <input id="fa2" placeholder="🔍 Müşteri ara…" oninput="renderTable()">
+        <select id="fd2" onchange="renderTable()">
+          <option value="">Tüm Durumlar</option>
+          <option>Beklemede</option>
+          <option>Tahsil Edildi</option>
+          <option>İptal</option>
+        </select>
       </div>
+      <div class="tbl-toolbar">
+        <span id="rowCount2">0 kayıt</span>
+        <button class="btn btn-ghost btn-xs" id="bulkDelBtn" style="display:none" onclick="bulkDelete()">🗑 Seçilenleri Sil</button>
+        <button class="btn btn-yellow btn-xs" id="bulkStatusBtn" style="display:none" onclick="bulkChangeStatus()">↻ Durum Değiştir</button>
+      </div>
+
+      <!-- Tablo (Masaüstü) -->
+      <div class="tbl-wrap" id="desktopTable2">
+        <table>
+          <thead><tr>
+            <th style="width:30px"><input type="checkbox" id="selectAll2" onchange="toggleSelectAll(event)" title="Tümünü seç"></th>
+            <th onclick="doSort('musteriAdi')">Müşteri ⇅</th>
+            <th onclick="doSort('firmaAdi')">Firma ⇅</th>
+            <th onclick="doSort('il')">İl/İlçe ⇅</th>
+            <th onclick="doSort('tutar')">Tutar ⇅</th>
+            <th onclick="doSort('odemeDurumu')">Durum ⇅</th>
+            <th>İşlemler</th>
+          </tr></thead>
+          <tbody id="tbody2"></tbody>
+        </table>
+      </div>
+      <!-- Mobil Kart Listesi -->
+      <div class="mob-list" id="mobList2"></div>
     </div>
   </div>
 
   <!-- TAB 3: KURULUM -->
   <div class="tab-pane" id="p3">
+    <!-- TEMSİLCİ YÖNETİMİ (Admin Panel) -->
+    <div class="setup-card">
+      <h2 style="color:var(--purple);font-size:17px;margin-bottom:7px">👥 Temsilci Yönetimi</h2>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Bu bölüm sadece Admin (8554 şifresi) tarafından erişilebilir. Temsilcileri ekle/sil.</p>
+      <div class="fgrp full"><label>Yeni Temsilci Adı</label><input id="newTemAd" placeholder="Temsilci adı (örn: Mehmet Yılmaz)"></div>
+      <div class="fgrp full"><label>Şifre</label><input id="newTemPwd" type="password" placeholder="Temsilci şifresi" onkeypress="if(event.key==='Enter')addTemsilci()"></div>
+      <div style="display:flex;gap:7px;margin-top:9px">
+        <button class="btn btn-green" onclick="addTemsilci()" style="flex:1">➕ Temsilci Ekle</button>
+        <button class="btn btn-ghost" onclick="refreshTemsilciList()">🔄 Yenile</button>
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <h3 style="font-size:13px;color:var(--text);margin-bottom:8px">Mevcut Temsilciler:</h3>
+        <div id="temsilciListDiv" style="max-height:300px;overflow-y:auto">
+          <div style="color:var(--muted);font-size:12px;padding:10px;text-align:center">Yükleniyor...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FIREBASE KURULUM -->
     <div class="setup-card">
       <h2 style="color:var(--orange);font-size:17px;margin-bottom:7px">🔥 Firebase Kurulum</h2>
       <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Firebase bilgileri koda gömülüdür — farklı cihazlarda aynı veritabanı otomatik senkronize olur.</p>
@@ -494,6 +545,9 @@ let activeFirma=null,activeTem=null;
 let muRec=null; // aktif müşteri detay (ad bazlı)
 let bdMode='single'; // 'single' veya 'musteri'
 let bdSingleRec=null;
+let loggedInTemsilci=null; // Giriş yapan temsilci adı
+let selectedRecords=new Set(); // Seçilen kayıtların ID'leri
+let temsilciList=[]; // Tüm temsilciler (Firebase'den yüklenir)
 
 // ============ FIREBASE ============
 function initFB(cfg){
@@ -510,6 +564,11 @@ function initFB(cfg){
       // Detay paneller açıksa güncelle
       if(muRec)refreshMuDetail();
     },err=>{showLd(false);setFBOK(false);toast('Firebase: '+err.message,'error');});
+    // Temsilcileri yükle
+    db.collection('temsilciler').orderBy('olusturma','desc').onSnapshot(snap=>{
+      temsilciList=snap.docs.map(d=>({id:d.id,...d.data()}));
+      loadTemsilciList();
+    });
   }catch(e){showLd(false);setFBOK(false);toast('FB init: '+e.message,'error');}
 }
 function setFBOK(ok){document.getElementById('fbDot').className='dot'+(ok?' on':'');document.getElementById('fbTxt').textContent=ok?'Canlı Bağlı':'Bağlı Değil';}
@@ -656,6 +715,10 @@ function updDL(id,items){document.getElementById(id).innerHTML=items.map(i=>`<op
 function getFiltered(){
   const a=normStr(v('fa')||''),fi=v('ff'),te=v('ft'),du=v('fd'),il=v('fi');
   let rows=[...data];
+  // Temsilci filtresi: Temsilci giriş yapmışsa sadece kendi müşterilerini görsün
+  if(loggedInTemsilci){
+    rows=rows.filter(r=>r.temsilci===loggedInTemsilci);
+  }
   if(a)rows=rows.filter(r=>[r.musteriAdi,r.firmaAdi,r.temsilci,r.il,r.ilce].some(x=>normStr(x||'').includes(a)));
   if(fi)rows=rows.filter(r=>r.firmaAdi===fi);
   if(te)rows=rows.filter(r=>r.temsilci===te);
@@ -665,6 +728,132 @@ function getFiltered(){
   return rows;
 }
 function doSort(f){if(sortField===f)sortDir*=-1;else{sortField=f;sortDir=1;}renderTable();}
+
+// ============ TEMSİLCİ LOGİN SYSTEM ============
+async function temsilciLogin(){
+  const ad=v('temLoginAd'),pwd=v('temLoginPwd');
+  if(!ad||!pwd){toast('Temsilci adı ve şifre gerekli!','error');return;}
+  const tem=temsilciList.find(t=>t.ad===ad&&t.sifre===pwd);
+  if(tem){
+    loggedInTemsilci=ad;
+    document.getElementById('temLoginPanel').style.display='none';
+    document.getElementById('temDashboard').style.display='block';
+    document.getElementById('temName').textContent=ad;
+    selectedRecords.clear();
+    renderTable();
+    toast('👤 Hoş geldin '+ad+'!','success');
+  }else{
+    toast('⚠️ Temsilci adı veya şifre hatalı!','error');
+    v('temLoginAd','');v('temLoginPwd','');
+  }
+}
+function temsilciLogout(){
+  loggedInTemsilci=null;
+  selectedRecords.clear();
+  document.getElementById('temLoginPanel').style.display='block';
+  document.getElementById('temDashboard').style.display='none';
+  document.getElementById('selectAll2').checked=false;
+  v('temLoginAd','');v('temLoginPwd','');
+  toast('🚪 Çıkış yapıldı','success');
+  renderTable();
+}
+
+// ============ MULTİ-SELECT SYSTEM ============
+function toggleSelectAll(e){
+  const rows=getFiltered();
+  if(e.target.checked){
+    rows.forEach(r=>selectedRecords.add(r.id));
+  }else{
+    selectedRecords.clear();
+  }
+  updateBulkButtons();
+  renderTable();
+}
+function toggleRecord(id,e){
+  if(e)e.stopPropagation();
+  if(selectedRecords.has(id)){
+    selectedRecords.delete(id);
+  }else{
+    selectedRecords.add(id);
+  }
+  updateBulkButtons();
+  renderTable();
+}
+function updateBulkButtons(){
+  const hasSel=selectedRecords.size>0;
+  document.getElementById('bulkDelBtn').style.display=hasSel?'inline-flex':'none';
+  document.getElementById('bulkStatusBtn').style.display=hasSel?'inline-flex':'none';
+}
+
+// ============ TOPLU İŞLEMLER ============
+async function bulkDelete(){
+  if(!selectedRecords.size){toast('Hiç kayıt seçilmedi','error');return;}
+  if(!confirm(`${selectedRecords.size} kayıt silinecek. Emin misin?`))return;
+  showLd(true);
+  try{
+    for(const id of selectedRecords){
+      await db.collection('kayitlar').doc(id).delete();
+    }
+    selectedRecords.clear();
+    showLd(false);
+    toast(`${selectedRecords.size} kayıt silindi ✓`,'success');
+    // onSnapshot otomatik trigger olacak
+  }catch(e){showLd(false);toast('Silme hatası: '+e.message,'error');}
+}
+async function bulkChangeStatus(){
+  if(!selectedRecords.size){toast('Hiç kayıt seçilmedi','error');return;}
+  const seçenekler=['Beklemede','Tahsil Edildi','İptal'];
+  const durum=prompt('Yeni durum seçin:\\n'+seçenekler.join(' / '));
+  if(!seçenekler.includes(durum))return;
+  showLd(true);
+  try{
+    for(const id of selectedRecords){
+      await db.collection('kayitlar').doc(id).update({odemeDurumu:durum,guncelleme:new Date().toISOString()});
+    }
+    selectedRecords.clear();
+    showLd(false);
+    toast(`Durum "${durum}" olarak değiştirildi ✓`,'success');
+  }catch(e){showLd(false);toast('Güncelleme hatası: '+e.message,'error');}
+}
+
+// ============ ADMIN PANEL: TEMSILCI YÖNETİMİ ============
+async function addTemsilci(){
+  const ad=v('newTemAd'),pwd=v('newTemPwd');
+  if(!ad||!pwd){toast('Temsilci adı ve şifre gerekli!','error');return;}
+  if(temsilciList.find(t=>t.ad===ad)){toast('Bu temsilci zaten var!','error');return;}
+  showLd(true);
+  try{
+    const newTem={ad,sifre:pwd,olusturma:new Date().toISOString()};
+    await db.collection('temsilciler').add(newTem);
+    v('newTemAd','');v('newTemPwd','');
+    showLd(false);
+    toast('✅ Temsilci eklendi!','success');
+    // loadTemsilciList otomatik çağrılacak (onSnapshot)
+  }catch(e){showLd(false);toast('Hata: '+e.message,'error');}
+}
+async function deleteTemsilci(ad){
+  if(!confirm('Temsilci "'+ad+'" silinecek. Emin misin?'))return;
+  showLd(true);
+  try{
+    const doc=await db.collection('temsilciler').where('ad','==',ad).get();
+    if(doc.empty){toast('Temsilci bulunamadı','error');showLd(false);return;}
+    await db.collection('temsilciler').doc(doc.docs[0].id).delete();
+    showLd(false);
+    toast('Temsilci silindi ✓','success');
+  }catch(e){showLd(false);toast('Silme hatası: '+e.message,'error');}
+}
+function refreshTemsilciList(){
+  loadTemsilciList();
+}
+function loadTemsilciList(){
+  const html=temsilciList.length?
+    temsilciList.map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--card);border-radius:6px;margin-bottom:6px;border-left:3px solid var(--purple)">
+      <div><div style="font-weight:700;font-size:13px">${esc(t.ad)}</div><div style="font-size:10px;color:var(--muted)">Şifre: ••••</div></div>
+      <button class="btn btn-danger btn-xs" onclick="deleteTemsilci('${esc(t.ad)}')">🗑</button>
+    </div>`).join(''):
+    '<div style="color:var(--muted);font-size:12px;text-align:center;padding:10px">Henüz temsilci yok</div>';
+  document.getElementById('temsilciListDiv').innerHTML=html;
+}
 
 // ---- MASAÜSTÜ TABLO (gruplu veya düz) ----
 function renderTable(){
