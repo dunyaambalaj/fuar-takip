@@ -2,7 +2,9 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Dünya Ambalaj - Fuar Tahsilat</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -10,6 +12,9 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
+* { -webkit-user-select: none; user-select: none; }
+input, textarea, select { -webkit-user-select: text; user-select: text; }
+
 :root{
   --bg:#07111f;--surface:#0d1d30;--card:#111e32;--card2:#152440;
   --accent:#1565C0;--orange:#E65100;--text:#dde5f0;--muted:#6b82a6;
@@ -17,6 +22,18 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh}
+
+/* Mobile input fix - prevent auto-zoom on iOS */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="password"],
+input[type="tel"],
+input[type="date"],
+textarea,
+select {
+  font-size: 16px !important;
+}
 
 .hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:50}
 .hdr img{height:40px;object-fit:contain}
@@ -222,7 +239,30 @@ tr:hover td{background:rgba(255,255,255,.025)}
 .tbl-toolbar{display:flex;gap:7px;margin-bottom:9px;flex-wrap:wrap;align-items:center}
 .tbl-toolbar span{flex:1;font-size:12px;color:var(--muted)}
 @media(max-width:480px){.fg{grid-template-columns:1fr}.fgrp.full{grid-column:1}.stat-row{grid-template-columns:repeat(3,1fr)}}
-</style>
+
+/* Mobile responsive improvements */
+@media(max-width:768px){
+  .hdr{padding:8px 12px;gap:6px}
+  .hdr img{height:32px}
+  .hdr-title{font-size:13px}
+  .btn{padding:5px 10px;font-size:11px}
+  .tabs{padding:0 12px;gap:0}
+  .tab{padding:8px 10px;font-size:12px}
+  .content{padding:10px 12px}
+  .fbar{padding:7px;gap:5px}
+  .fbar input,.fbar select{font-size:11px;padding:6px 8px}
+  #currentUserDisplay{font-size:11px}
+  .setup-card{padding:12px}
+}
+
+@media(max-width:480px){
+  .hdr{flex-direction:column;align-items:stretch;}
+  .hdr-title{flex:1;text-align:center}
+  .fb-pill{justify-content:center;padding:6px}
+  #currentUserDisplay{display:block;margin:8px 0;text-align:center}
+  .btn-ghost{flex:1;justify-content:center}
+  .tabs{padding:0 8px;gap:0}
+}
 </head>
 <body>
 
@@ -237,8 +277,8 @@ tr:hover td{background:rgba(255,255,255,.025)}
       <h1 style="font-size:22px;color:var(--orange);margin-bottom:4px">Fuar Tahsilat</h1>
       <p style="color:var(--muted);font-size:12px">Dünya Ambalaj - Giriş Paneli</p>
     </div>
-    <div class="fgrp full"><label>Kullanıcı Adı</label><input id="loginUsername" placeholder="Kullanıcı adı" onkeypress="if(event.key==='Enter')userLogin()"></div>
-    <div class="fgrp full"><label>Şifre</label><input id="loginPassword" type="password" placeholder="Şifreniz" onkeypress="if(event.key==='Enter')userLogin()"></div>
+    <div class="fgrp full"><label>Kullanıcı Adı</label><input id="loginUsername" placeholder="admin" onkeypress="if(event.key==='Enter')userLogin()" style="font-size:16px;"></div>
+    <div class="fgrp full"><label>Şifre (Sadece Sayı)</label><input id="loginPassword" type="number" inputmode="numeric" placeholder="8554" min="0" onkeypress="if(event.key==='Enter')userLogin()" style="font-size:16px;"></div>
     <button class="btn btn-accent" onclick="userLogin()" style="width:100%;margin-top:12px;justify-content:center">🔓 Giriş Yap</button>
     <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--muted)">
       <p>Demo: admin / 8554</p>
@@ -594,8 +634,12 @@ async function userLogin(){
   const usr=v('loginUsername'),pwd=v('loginPassword');
   if(!usr||!pwd){toast('Kullanıcı adı ve şifre gerekli!','error');return;}
   
-  // Lokalde yüklenmiş users'dan kontrol et
-  const user=usersList.find(u=>u.ad===usr&&u.sifre===pwd);
+  // Debug: users listini kontrol et
+  console.log('[LOGIN] usersList:', usersList);
+  
+  // Case-insensitive username matching, exact password (as string)
+  const user=usersList.find(u=>u.ad.toLowerCase()===usr.toLowerCase()&&String(u.sifre)===String(pwd));
+  
   if(user){
     currentUser={ad:user.ad,rol:user.rol,id:user.id};
     if(user.rol==='temsilci'){
@@ -604,6 +648,7 @@ async function userLogin(){
     showAppScreen();
     toast('👋 Hoş geldin '+user.ad+'!','success');
   }else{
+    console.log('[LOGIN] Hata: User bulunamadı', {usr, pwd, usersInList: usersList.map(u=>u.ad)});
     toast('⚠️ Kullanıcı adı veya şifre hatalı!','error');
     v('loginPassword','');
   }
@@ -645,11 +690,16 @@ function initFB(cfg){
     // Users collection'ı yükle - Admin/Temsilci authentication
     db.collection('users').orderBy('olusturma','desc').onSnapshot(snap=>{
       usersList=snap.docs.map(d=>({id:d.id,...d.data()}));
-      // Admin user yoksa, create et
-      if(!usersList.find(u=>u.ad==='admin')){
-        db.collection('users').add({ad:'admin',sifre:'8554',rol:'admin',olusturma:new Date().toISOString()});
-      }
+      console.log('[USERS] Loaded:', usersList);
     });
+    
+    // Admin user kurulumunu async olarak kontrol et
+    setTimeout(async()=>{
+      if(!usersList.find(u=>u.ad==='admin')){
+        console.log('[INIT] Admin user oluşturuluyor...');
+        await db.collection('users').add({ad:'admin',sifre:'8554',rol:'admin',olusturma:new Date().toISOString()});
+      }
+    },500);
     
     if(unsub){unsub();unsub=null;}
     unsub=db.collection('kayitlar').orderBy('olusturma','desc').onSnapshot(snap=>{
