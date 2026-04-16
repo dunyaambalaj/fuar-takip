@@ -229,7 +229,26 @@ tr:hover td{background:rgba(255,255,255,.025)}
 <div class="ld" id="ld"><div class="spin"></div><div style="font-size:13px;color:var(--muted)">Firebase bağlanıyor...</div></div>
 <div class="toast" id="toast"></div>
 
-<!-- HEADER -->
+<!-- GLOBAL LOGIN PANEL -->
+<div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)">
+  <div class="setup-card" style="max-width:400px;width:90%">
+    <div style="text-align:center;margin-bottom:20px">
+      <img id="loginLogo" src="" alt="" style="height:60px;margin-bottom:10px">
+      <h1 style="font-size:22px;color:var(--orange);margin-bottom:4px">Fuar Tahsilat</h1>
+      <p style="color:var(--muted);font-size:12px">Dünya Ambalaj - Giriş Paneli</p>
+    </div>
+    <div class="fgrp full"><label>Kullanıcı Adı</label><input id="loginUsername" placeholder="Kullanıcı adı" onkeypress="if(event.key==='Enter')userLogin()"></div>
+    <div class="fgrp full"><label>Şifre</label><input id="loginPassword" type="password" placeholder="Şifreniz" onkeypress="if(event.key==='Enter')userLogin()"></div>
+    <button class="btn btn-accent" onclick="userLogin()" style="width:100%;margin-top:12px;justify-content:center">🔓 Giriş Yap</button>
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--muted)">
+      <p>Demo: admin / 8554</p>
+      <p style="margin-top:4px">Temsilci örnekleri admin panelinden oluş</p>
+    </div>
+  </div>
+</div>
+
+<!-- ANA UYGULAMA (Giriş sonrası) -->
+<div id="appScreen" style="display:none">
 <div class="hdr">
   <img id="hdrLogo" src="" alt="">
   <div class="hdr-title">Dünya Ambalaj &ndash; <span>Fuar Tahsilat</span></div>
@@ -238,6 +257,11 @@ tr:hover td{background:rgba(255,255,255,.025)}
   <button class="btn btn-ghost" onclick="document.getElementById('xlsIn').click()">📥 Excel</button>
   <button class="btn btn-ghost" onclick="exportExcel()">📤 Dışa Aktar</button>
   <button class="btn btn-orange" onclick="openModal()">+ Yeni</button>
+  <div style="flex:1"></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="currentUserDisplay" style="font-size:12px;color:var(--blue);font-weight:700">—</span>
+    <button class="btn btn-ghost btn-xs" onclick="userLogout()">🚪 Çıkış</button>
+  </div>
 </div>
 
 <!-- TABS -->
@@ -245,20 +269,11 @@ tr:hover td{background:rgba(255,255,255,.025)}
   <div class="tab active" onclick="goTab(0,this)">📋 Müşteriler</div>
   <div class="tab" onclick="goTab(1,this)">🏢 Firmalar</div>
   <div class="tab" onclick="goTab(2,this)">👤 Temsilciler</div>
-  <div class="tab" onclick="checkPasswordTab(3,this)">⚙ Kurulum</div>
+  <div class="tab" onclick="goTab(3,this)">⚙ Kurulum</div>
+  <div id="settingsTab" class="tab" onclick="goTab(4,this)" style="display:none">🔧 Ayarlar</div>
 </div>
 
-<!-- PASSWORD MODAL -->
-<div class="overlay" id="passwordModal">
-  <div class="modal">
-    <h2 style="color:var(--orange);margin-bottom:14px">🔐 Giriş Şifresi</h2>
-    <div class="fgrp full"><label>Şifre Girin</label><input id="pwdInput" type="password" placeholder="****" onkeypress="if(event.key==='Enter')verifyPassword()"></div>
-    <div class="m-acts">
-      <button class="btn btn-ghost" onclick="closePwdModal()">İptal</button>
-      <button class="btn btn-accent" onclick="verifyPassword()">Doğrula</button>
-    </div>
-  </div>
-</div>
+<!-- PASSWORD MODAL REMOVED - Using global authentication instead -->
 
 <div class="content">
 
@@ -388,24 +403,6 @@ tr:hover td{background:rgba(255,255,255,.025)}
 
   <!-- TAB 3: KURULUM -->
   <div class="tab-pane" id="p3">
-    <!-- TEMSİLCİ YÖNETİMİ (Admin Panel) -->
-    <div class="setup-card">
-      <h2 style="color:var(--purple);font-size:17px;margin-bottom:7px">👥 Temsilci Yönetimi</h2>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Bu bölüm sadece Admin (8554 şifresi) tarafından erişilebilir. Temsilcileri ekle/sil.</p>
-      <div class="fgrp full"><label>Yeni Temsilci Adı</label><input id="newTemAd" placeholder="Temsilci adı (örn: Mehmet Yılmaz)"></div>
-      <div class="fgrp full"><label>Şifre</label><input id="newTemPwd" type="password" placeholder="Temsilci şifresi" onkeypress="if(event.key==='Enter')addTemsilci()"></div>
-      <div style="display:flex;gap:7px;margin-top:9px">
-        <button class="btn btn-green" onclick="addTemsilci()" style="flex:1">➕ Temsilci Ekle</button>
-        <button class="btn btn-ghost" onclick="refreshTemsilciList()">🔄 Yenile</button>
-      </div>
-      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-        <h3 style="font-size:13px;color:var(--text);margin-bottom:8px">Mevcut Temsilciler:</h3>
-        <div id="temsilciListDiv" style="max-height:300px;overflow-y:auto">
-          <div style="color:var(--muted);font-size:12px;padding:10px;text-align:center">Yükleniyor...</div>
-        </div>
-      </div>
-    </div>
-
     <!-- FIREBASE KURULUM -->
     <div class="setup-card">
       <h2 style="color:var(--orange);font-size:17px;margin-bottom:7px">🔥 Firebase Kurulum</h2>
@@ -442,6 +439,45 @@ service cloud.firestore {
           <button class="btn btn-accent" onclick="saveCustomConfig()">🔥 Kaydet & Bağlan</button>
           <button class="btn btn-ghost" onclick="resetToDefault()">↩ Varsayılan</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: SETTINGS (Admin Only) -->
+  <div class="tab-pane" id="p4">
+    <!-- USERS MANAGEMENT -->
+    <div class="setup-card">
+      <h2 style="color:var(--blue);font-size:17px;margin-bottom:7px">👥 Kullanıcı Yönetimi</h2>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Tüm kullanıcıları ekle, sil ve yönet.</p>
+      <div class="fgrp full"><label>Kullanıcı Adı</label><input id="newUserAd" placeholder="Kullanıcı adı (örn: mehmet.yilmaz)"></div>
+      <div class="fgrp"><label>Şifre</label><input id="newUserPwd" type="password" placeholder="Şifre" onkeypress="if(event.key==='Enter')addUser()"></div>
+      <div class="fgrp"><label>Rol</label>
+        <select id="newUserRol">
+          <option value="temsilci">👤 Temsilci</option>
+          <option value="admin">🔐 Admin</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:7px;margin-top:9px">
+        <button class="btn btn-green" onclick="addUser()" style="flex:1">➕ Kullanıcı Ekle</button>
+        <button class="btn btn-ghost" onclick="refreshUserList()">🔄 Yenile</button>
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <h3 style="font-size:13px;color:var(--text);margin-bottom:8px">Mevcut Kullanıcılar:</h3>
+        <div id="userListDiv" style="max-height:350px;overflow-y:auto">
+          <div style="color:var(--muted);font-size:12px;padding:10px;text-align:center">Yükleniyor...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEMSILCI MANAGEMENT (Legacy) -->
+    <div class="setup-card">
+      <h2 style="color:var(--purple);font-size:17px;margin-bottom:7px">👔 Temsilci Atamaları</h2>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Kullanıcılar "Temsilci" tabında giriş yapabilir. Sistemi hem global auth hem legacy tab'den supports ediyoruz.</p>
+      <div style="padding:10px;background:var(--bg2);border-radius:6px;border-left:3px solid var(--blue);font-size:13px;color:var(--text);margin-bottom:14px">
+        💡 Temsilciler artık <strong>Kullanıcı Yönetimi</strong>'nde "Temsilci" rolü ile oluşturuluyor.
+      </div>
+      <div id="temsilciListDiv" style="max-height:300px;overflow-y:auto">
+        <div style="color:var(--muted);font-size:12px;padding:10px;text-align:center">Yükleniyor...</div>
       </div>
     </div>
   </div>
@@ -548,27 +584,85 @@ let bdSingleRec=null;
 let loggedInTemsilci=null; // Giriş yapan temsilci adı
 let selectedRecords=new Set(); // Seçilen kayıtların ID'leri
 let temsilciList=[]; // Tüm temsilciler (Firebase'den yüklenir)
+// YENİ: Global Auth System
+let currentUser=null; // {ad, rol, id} - Giriş yapan kullanıcı
+let usersList=[]; // Tüm users (Firebase'den yüklenir)
 
 // ============ FIREBASE ============
+// ============ GLOBAL AUTH SYSTEM ============
+async function userLogin(){
+  const usr=v('loginUsername'),pwd=v('loginPassword');
+  if(!usr||!pwd){toast('Kullanıcı adı ve şifre gerekli!','error');return;}
+  
+  // Lokalde yüklenmiş users'dan kontrol et
+  const user=usersList.find(u=>u.ad===usr&&u.sifre===pwd);
+  if(user){
+    currentUser={ad:user.ad,rol:user.rol,id:user.id};
+    if(user.rol==='temsilci'){
+      loggedInTemsilci=user.ad; // Temsilci ise kendi adıyla filtrele
+    }
+    showAppScreen();
+    toast('👋 Hoş geldin '+user.ad+'!','success');
+  }else{
+    toast('⚠️ Kullanıcı adı veya şifre hatalı!','error');
+    v('loginPassword','');
+  }
+}
+function userLogout(){
+  currentUser=null;
+  loggedInTemsilci=null;
+  selectedRecords.clear();
+  showLoginScreen();
+  v('loginUsername','');v('loginPassword','');
+  toast('🚪 Çıkış yapıldı','success');
+}
+function showLoginScreen(){
+  document.getElementById('loginScreen').style.display='flex';
+  document.querySelectorAll('.hdr, .tabs, #content, .overlay').forEach(el=>el.style.display='none');
+}
+function showAppScreen(){
+  document.getElementById('loginScreen').style.display='none';
+  document.querySelector('.hdr').style.display='flex';
+  document.querySelector('.tabs').style.display='flex';
+  document.querySelector('.content').style.display='block';
+  v('currentUserDisplay',`👤 ${currentUser.ad} (${currentUser.rol})`);
+  // Show Settings tab only for admins
+  if(currentUser.rol==='admin'){
+    v('settingsTab','flex');
+  }else{
+    v('settingsTab','none');
+  }
+  renderAll();
+}
+
 function initFB(cfg){
   try{
     showLd(true);
     firebase.apps.forEach(a=>a.delete());
     firebase.initializeApp(cfg);
     db=firebase.firestore();
+    
+    // Users collection'ı yükle - Admin/Temsilci authentication
+    db.collection('users').orderBy('olusturma','desc').onSnapshot(snap=>{
+      usersList=snap.docs.map(d=>({id:d.id,...d.data()}));
+      // Admin user yoksa, create et
+      if(!usersList.find(u=>u.ad==='admin')){
+        db.collection('users').add({ad:'admin',sifre:'8554',rol:'admin',olusturma:new Date().toISOString()});
+      }
+    });
+    
     if(unsub){unsub();unsub=null;}
     unsub=db.collection('kayitlar').orderBy('olusturma','desc').onSnapshot(snap=>{
       data=snap.docs.map(d=>({id:d.id,...d.data()}));
-      showLd(false);setFBOK(true);
-      renderAll();
-      // Detay paneller açıksa güncelle
-      if(muRec)refreshMuDetail();
+      if(currentUser){ // Sadece giriş yapıldıysa render
+        showLd(false);setFBOK(true);
+        renderAll();
+        if(muRec)refreshMuDetail();
+      }
     },err=>{showLd(false);setFBOK(false);toast('Firebase: '+err.message,'error');});
-    // Temsilcileri yükle
-    db.collection('temsilciler').orderBy('olusturma','desc').onSnapshot(snap=>{
-      temsilciList=snap.docs.map(d=>({id:d.id,...d.data()}));
-      loadTemsilciList();
-    });
+    
+    showLd(false);
+    showLoginScreen(); // İlk açılışta login screen'i göster
   }catch(e){showLd(false);setFBOK(false);toast('FB init: '+e.message,'error');}
 }
 function setFBOK(ok){document.getElementById('fbDot').className='dot'+(ok?' on':'');document.getElementById('fbTxt').textContent=ok?'Canlı Bağlı':'Bağlı Değil';}
@@ -853,6 +947,49 @@ function loadTemsilciList(){
     </div>`).join(''):
     '<div style="color:var(--muted);font-size:12px;text-align:center;padding:10px">Henüz temsilci yok</div>';
   document.getElementById('temsilciListDiv').innerHTML=html;
+}
+
+// ============ USER MANAGEMENT (Global Auth) ============
+async function addUser(){
+  const ad=v('newUserAd'),pwd=v('newUserPwd'),rol=v('newUserRol');
+  if(!ad||!pwd||!rol){toast('Tüm alanlar gerekli!','error');return;}
+  if(usersList.find(u=>u.ad===ad)){toast('Bu kullanıcı zaten var!','error');return;}
+  showLd(true);
+  try{
+    const newUser={ad,sifre:pwd,rol,olusturma:new Date().toISOString()};
+    await db.collection('users').add(newUser);
+    v('newUserAd','');v('newUserPwd','');v('newUserRol','temsilci');
+    showLd(false);
+    toast('✅ Kullanıcı eklendi!','success');
+    // loadUserList otomatik çağrılacak (onSnapshot)
+  }catch(e){showLd(false);toast('Hata: '+e.message,'error');}
+}
+async function deleteUser(ad){
+  if(!confirm('Kullanıcı "'+ad+'" silinecek. Emin misin?'))return;
+  if(ad===currentUser.ad){toast('Kendi hesabını silemezsin!','error');return;}
+  showLd(true);
+  try{
+    const doc=await db.collection('users').where('ad','==',ad).get();
+    if(doc.empty){toast('Kullanıcı bulunamadı','error');showLd(false);return;}
+    await db.collection('users').doc(doc.docs[0].id).delete();
+    showLd(false);
+    toast('Kullanıcı silindi ✓','success');
+  }catch(e){showLd(false);toast('Silme hatası: '+e.message,'error');}
+}
+function refreshUserList(){
+  loadUserList();
+}
+function loadUserList(){
+  const html=usersList.length?
+    usersList.map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--card);border-radius:6px;margin-bottom:6px;border-left:3px solid ${u.rol==='admin'?'var(--red)':'var(--blue)'}">
+      <div>
+        <div style="font-weight:700;font-size:13px">${esc(u.ad)}</div>
+        <div style="font-size:10px;color:var(--muted)">${u.rol==='admin'?'🔐 Admin':'👤 Temsilci'} • Şifre: ••••</div>
+      </div>
+      ${u.ad===currentUser.ad?'<div style="font-size:11px;color:var(--green);font-weight:700">Siz</div>':'<button class="btn btn-danger btn-xs" onclick="deleteUser(\''+esc(u.ad)+'\')">🗑</button>'}
+    </div>`).join(''):
+    '<div style="color:var(--muted);font-size:12px;text-align:center;padding:10px">Henüz kullanıcı yok</div>';
+  document.getElementById('userListDiv').innerHTML=html;
 }
 
 // ---- MASAÜSTÜ TABLO (gruplu veya düz) ----
@@ -1427,33 +1564,10 @@ async function waShare(){
 
 // ============ TABS ============
 let pendingTabIndex=null;
-function checkPasswordTab(i,el){
-  // Tab 2 (Temsilciler) ve Tab 3 (Kurulum) password korumalı
-  if(i===2||i===3){
-    pendingTabIndex=i;pendingTabElement=el;
-    document.getElementById('pwdInput').value='';
-    document.getElementById('pwdInput').focus();
-    document.getElementById('passwordModal').classList.add('open');
-  }else{
-    goTab(i,el);
-  }
-}
-let pendingTabElement=null;
-function verifyPassword(){
-  const pwd=document.getElementById('pwdInput').value;
-  if(pwd==='8554'){
-    goTab(pendingTabIndex,pendingTabElement);
-    closePwdModal();
-  }else{
-    toast('⚠️ Şifre hatalı!','error');
-    document.getElementById('pwdInput').value='';
-    document.getElementById('pwdInput').focus();
-  }
-}
-function closePwdModal(){
-  document.getElementById('passwordModal').classList.remove('open');
-  pendingTabIndex=null;pendingTabElement=null;
-}
+// ============ PASSWORD MODAL FUNCTIONS REMOVED ============
+// Using global authentication instead. All users must login before accessing any tabs.
+// The Settings tab is dynamically shown/hidden based on user role in showAppScreen()
+
 function goTab(i,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
