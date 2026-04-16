@@ -277,12 +277,11 @@ tr:hover td{background:rgba(255,255,255,.025)}
       <h1 style="font-size:22px;color:var(--orange);margin-bottom:4px">Fuar Tahsilat</h1>
       <p style="color:var(--muted);font-size:12px">Dünya Ambalaj - Giriş Paneli</p>
     </div>
-    <div class="fgrp full"><label>Kullanıcı Adı</label><input id="loginUsername" placeholder="admin" onkeypress="if(event.key==='Enter')userLogin()" style="font-size:16px;"></div>
-    <div class="fgrp full"><label>Şifre (Sadece Sayı)</label><input id="loginPassword" type="number" inputmode="numeric" placeholder="8554" min="0" onkeypress="if(event.key==='Enter')userLogin()" style="font-size:16px;"></div>
+    <div class="fgrp full"><label>Kullanıcı Adı</label><input id="loginUsername" placeholder="Adınızı giriniz" onkeypress="if(event.key==='Enter')userLogin()" style="font-size:16px;"></div>
+    <div class="fgrp full"><label>Şifre</label><input id="loginPassword" type="number" inputmode="numeric" placeholder="Şifrenizi giriniz" min="0" onkeypress="if(event.key==='Enter')userLogin()" style="font-size:16px;"></div>
     <button class="btn btn-accent" onclick="userLogin()" style="width:100%;margin-top:12px;justify-content:center">🔓 Giriş Yap</button>
     <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--muted)">
-      <p>Demo: admin / 8554</p>
-      <p style="margin-top:4px">Temsilci örnekleri admin panelinden oluş</p>
+      <p>Admin panelinden yeni kullanıcı oluştur</p>
     </div>
   </div>
 </div>
@@ -666,6 +665,7 @@ function showLoginScreen(){
   document.querySelectorAll('.hdr, .tabs, #content, .overlay').forEach(el=>el.style.display='none');
 }
 function showAppScreen(){
+  console.log('[SHOW_APP] Uygulama başlatılıyor...');
   document.getElementById('loginScreen').style.display='none';
   document.querySelector('.hdr').style.display='flex';
   document.querySelector('.tabs').style.display='flex';
@@ -673,11 +673,13 @@ function showAppScreen(){
   v('currentUserDisplay',`👤 ${currentUser.ad} (${currentUser.rol})`);
   // Show Settings tab only for admins
   if(currentUser.rol==='admin'){
-    v('settingsTab','flex');
+    document.getElementById('settingsTab').style.display='flex';
   }else{
-    v('settingsTab','none');
+    document.getElementById('settingsTab').style.display='none';
   }
+  console.log('[SHOW_APP] renderAll çağrılıyor...');
   renderAll();
+  console.log('[SHOW_APP] Tamam!');
 }
 
 function initFB(cfg){
@@ -690,7 +692,7 @@ function initFB(cfg){
     // Users collection'ı yükle - Admin/Temsilci authentication
     db.collection('users').orderBy('olusturma','desc').onSnapshot(snap=>{
       usersList=snap.docs.map(d=>({id:d.id,...d.data()}));
-      console.log('[USERS] Loaded:', usersList);
+      console.log('[USERS] Yüklendi:', usersList.length, 'user');
     });
     
     // Admin user kurulumunu async olarak kontrol et
@@ -704,14 +706,17 @@ function initFB(cfg){
     if(unsub){unsub();unsub=null;}
     unsub=db.collection('kayitlar').orderBy('olusturma','desc').onSnapshot(snap=>{
       data=snap.docs.map(d=>({id:d.id,...d.data()}));
+      console.log('[DATA] Yüklendi:', data.length, 'kayıt');
       if(currentUser){ // Sadece giriş yapıldıysa render
         showLd(false);setFBOK(true);
         renderAll();
         if(muRec)refreshMuDetail();
+      }else{
+        showLd(false);
       }
     },err=>{showLd(false);setFBOK(false);toast('Firebase: '+err.message,'error');});
     
-    showLd(false);
+    console.log('[INIT] Firebase kuruldu, login ekranı gösteriliyor');
     showLoginScreen(); // İlk açılışta login screen'i göster
   }catch(e){showLd(false);setFBOK(false);toast('FB init: '+e.message,'error');}
 }
