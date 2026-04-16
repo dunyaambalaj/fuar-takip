@@ -245,7 +245,19 @@ tr:hover td{background:rgba(255,255,255,.025)}
   <div class="tab active" onclick="goTab(0,this)">📋 Müşteriler</div>
   <div class="tab" onclick="goTab(1,this)">🏢 Firmalar</div>
   <div class="tab" onclick="goTab(2,this)">👤 Temsilciler</div>
-  <div class="tab" onclick="goTab(3,this)">⚙ Kurulum</div>
+  <div class="tab" onclick="checkPasswordTab(3,this)">⚙ Kurulum</div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="overlay" id="passwordModal">
+  <div class="modal">
+    <h2 style="color:var(--orange);margin-bottom:14px">🔐 Giriş Şifresi</h2>
+    <div class="fgrp full"><label>Şifre Girin</label><input id="pwdInput" type="password" placeholder="****" onkeypress="if(event.key==='Enter')verifyPassword()"></div>
+    <div class="m-acts">
+      <button class="btn btn-ghost" onclick="closePwdModal()">İptal</button>
+      <button class="btn btn-accent" onclick="verifyPassword()">Doğrula</button>
+    </div>
+  </div>
 </div>
 
 <div class="content">
@@ -555,15 +567,15 @@ function importExcel(inp){
       // Başlıkları normalize et — Türkçe karakter + boşluk duyarsız
       const hdrs=rows[0].map(h=>normStr(h));
       const map={
-        musteri:'musteriAdi',musteriad:'musteriAdi',musteriadisoyadi:'musteriAdi','musteriadisoyadi':'musteriAdi','adsoyad':'musteriAdi','adisoyadi':'musteriAdi',
-        firma:'firmaAdi',firmaad:'firmaAdi','firmaadi':'firmaAdi',
-        temsilci:'temsilci','musteriTemsilcisi':'temsilci',mustemsilci:'temsilci',
-        il:'il','sehir':'il',sehir:'il',
-        ilce:'ilce','ilce':'ilce',
-        tutar:'tutar',fiyat:'tutar','satis':'tutar',miktar:'tutar',
-        durum:'odemeDurumu','odemedurum':'odemeDurumu','odeme':'odemeDurumu',
-        tarih:'tarih',tarih:'tarih',
-        notlar:'notlar',not:'notlar','aciklama':'notlar'
+        musteri:'musteriAdi',musteriad:'musteriAdi',musteriadisoyadi:'musteriAdi',adsoyad:'musteriAdi',adisoyadi:'musteriAdi',adı:'musteriAdi',adi:'musteriAdi',
+        firma:'firmaAdi',firmaad:'firmaAdi',firmaadi:'firmaAdi',firmaismi:'firmaAdi',
+        temsilci:'temsilci',musteriTemsilcisi:'temsilci',mustemsilci:'temsilci',temsilcisi:'temsilci',
+        il:'il',sehir:'il',
+        ilce:'ilce',ilcesi:'ilce',
+        tutar:'tutar',fiyat:'tutar',satis:'tutar',miktar:'tutar',tutar:'tutar',tutari:'tutar',
+        durum:'odemeDurumu',odemedurum:'odemeDurumu',odeme:'odemeDurumu',odemestatus:'odemeDurumu',
+        tarih:'tarih',tarih:'tarih',tarihi:'tarih',
+        notlar:'notlar',not:'notlar',aciklama:'notlar',acıklama:'notlar'
       };
       const cols=hdrs.map(h=>map[h]||h);
       let cnt=0;showLd(true);
@@ -573,11 +585,12 @@ function importExcel(inp){
         cols.forEach((f,j)=>{
           if(!rec.hasOwnProperty(f))return;
           const val=String(r[j]||'').trim();
+          if(!val)return;  // Boş değerleri atla
           if(f==='odemeDurumu')rec[f]=normDurum(val);
+          else if(f==='tutar')rec[f]=parseFloat(val.toString().replace(',','.'))||0;
           else rec[f]=val;
         });
-        rec.tutar=parseFloat(String(rec.tutar).replace(',','.'))||0;
-        if(!rec.musteriAdi&&!rec.firmaAdi)continue;
+        if(!rec.musteriAdi&&!rec.firmaAdi)continue;  // En az biri dolu olmalı
         await db.collection('kayitlar').add(rec);cnt++;
       }
       showLd(false);toast(cnt+' kayıt içe aktarıldı ✓','success');
@@ -1204,6 +1217,34 @@ async function waShare(){
 }
 
 // ============ TABS ============
+let pendingTabIndex=null;
+function checkPasswordTab(i,el){
+  // Tab 2 (Temsilciler) ve Tab 3 (Kurulum) password korumalı
+  if(i===2||i===3){
+    pendingTabIndex=i;pendingTabElement=el;
+    document.getElementById('pwdInput').value='';
+    document.getElementById('pwdInput').focus();
+    document.getElementById('passwordModal').classList.add('open');
+  }else{
+    goTab(i,el);
+  }
+}
+let pendingTabElement=null;
+function verifyPassword(){
+  const pwd=document.getElementById('pwdInput').value;
+  if(pwd==='8554'){
+    goTab(pendingTabIndex,pendingTabElement);
+    closePwdModal();
+  }else{
+    toast('⚠️ Şifre hatalı!','error');
+    document.getElementById('pwdInput').value='';
+    document.getElementById('pwdInput').focus();
+  }
+}
+function closePwdModal(){
+  document.getElementById('passwordModal').classList.remove('open');
+  pendingTabIndex=null;pendingTabElement=null;
+}
 function goTab(i,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
