@@ -328,7 +328,7 @@ tr:hover td{background:rgba(255,255,255,.025)}
           <th style="width:30px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll()" style="width:auto"></th>
           <th onclick="doSort('musteriAdi')">Müşteri ⇅</th>
           <th onclick="doSort('cariNo')">Müşteri Kodu ⇅</th>
-          <th onclick="doSort('firmaAdi')">Firma ⇅</th>
+          <th id="thFirma" onclick="doSort('firmaAdi')">Firma ⇅</th>
           <th onclick="doSort('temsilci')">Temsilci ⇅</th>
           <th onclick="doSort('il')">İl/İlçe ⇅</th>
           <th onclick="doSort('tutar')">Tutar ⇅</th>
@@ -753,6 +753,7 @@ function doSort(f){if(sortField===f)sortDir*=-1;else{sortField=f;sortDir=1;}rend
 function renderTable(){
   const rows=getFiltered();
   const grouped=document.getElementById('groupByMusteri').checked;
+  document.getElementById('thFirma').style.display=grouped?'none':'';
   document.getElementById('emMus').style.display=rows.length?'none':'';
   document.getElementById('rowCount').textContent=rows.length+' kayıt ('+(grouped?'müşteri bazlı':'tek tek')+')';
   if(grouped){renderGrouped(rows);}else{renderFlat(rows);}
@@ -765,7 +766,7 @@ function renderFlat(rows){
     <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-id="${r.id}" onchange="updateBulkUI()"></td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')"><strong>${esc(r.musteriAdi||'')} </strong></td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted)">${esc(r.cariNo||'–')}</td>
-    <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')">${esc(r.firmaAdi||'')} </td>
+    <td class="colFirma" onclick="openMuDetail('${esc(r.musteriAdi||'')}')">${esc(r.firmaAdi||'')} </td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted)">${esc(r.temsilci||'–')}</td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted)">${esc(r.il||'')}${r.ilce?'/'+esc(r.ilce):''}</td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" ><strong>${fmt(r.tutar)}</strong></td>
@@ -799,7 +800,7 @@ function renderGrouped(rows){
       <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox group-checkbox" data-musteri="${esc(musteri)}" onchange="toggleGroupCheckboxes(this)"></td>
       <td><strong>${esc(musteri)}</strong><br><span style="font-size:10px;color:var(--muted)">${items.length} alım · ${[...new Set(items.map(r=>r.firmaAdi).filter(Boolean))].length} firma</span></td>
       <td style="color:var(--muted)">${esc(ilRow.cariNo||'–')}</td>
-      <td style="color:var(--muted)">${esc([...new Set(items.map(r=>r.firmaAdi).filter(Boolean))].join(', ')||'–')}</td>
+      <td class="colFirma" style="display:none">${esc([...new Set(items.map(r=>r.firmaAdi).filter(Boolean))].join(', ')||'–')}</td>
       <td style="color:var(--muted)">${esc(ilRow.temsilci||'–')}</td>
       <td style="color:var(--muted)">${esc(ilRow.il||'')}${ilRow.ilce?'/'+esc(ilRow.ilce):''}</td>
       <td colspan="2"><strong>${fmt(toplam)}</strong>${bekleyen>0?`<br><span style="font-size:10px;color:var(--yellow)">⏳ ${fmt(bekleyen)}</span>`:''}</td>
@@ -1509,6 +1510,11 @@ function onLoginSuccess(){
   document.getElementById('tab3').style.display=isAdmin?'':'none';
   document.getElementById('btnImport').style.display=isAdmin?'':'none';
   document.getElementById('btnYeni').style.display=isAdmin?'':'none';
+  // Always reset to main tab (Müşteriler) on login
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.tab').classList.add('active');
+  document.getElementById('p0').classList.add('active');
   showLd(false);
   startFirestoreListener();
 }
