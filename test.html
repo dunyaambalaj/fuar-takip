@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test - Fuar Tahsilat</title>
+<style>
+  body { background: #07111f; color: #dde5f0; font-family: 'Segoe UI'; padding: 30px; }
+  .test { background: #0d1d30; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #60a5fa; }
+  .ok { border-left-color: #4ade80; }
+  .err { border-left-color: #f87171; }
+  h1 { color: #ffa940; }
+</style>
+</head>
+<body>
+
+<h1>🧪 Fuar Tahsilat - Test Sayfası</h1>
+
+<div class="test ok" id="test1">✅ HTML yüklendi</div>
+<div class="test" id="test2">⏳ JavaScript kontrol ediliyor...</div>
+<div class="test" id="test3">⏳ Firebase kontrol ediliyor...</div>
+<div class="test" id="test4">⏳ Firestore koleksiyonları kontrol ediliyor...</div>
+
+<script>
+  // Test 2: JavaScript çalışıyor
+  document.getElementById('test2').innerHTML = '✅ JavaScript çalışıyor';
+  document.getElementById('test2').classList.add('ok');
+  
+  // Test 3: Firebase SDK'sı yükle
+  document.write('<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"><\/script>');
+  document.write('<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"><\/script>');
+  
+  setTimeout(() => {
+    if (typeof firebase !== 'undefined') {
+      document.getElementById('test3').innerHTML = '✅ Firebase SDK yüklendi';
+      document.getElementById('test3').classList.add('ok');
+      
+      // Test 4: Firestore bağlantısı
+      try {
+        const config = {
+          apiKey: "AIzaSyDdw-BFHoJAuWkZnYW2hCBThA4D_WUuf0U",
+          authDomain: "fuar-takip-e42a1.firebaseapp.com",
+          projectId: "fuar-takip-e42a1",
+          storageBucket: "fuar-takip-e42a1.firebasestorage.app",
+          messagingSenderId: "466470969311",
+          appId: "1:466470969311:web:8257e5d4c2376235a72e6a"
+        };
+        
+        firebase.apps.forEach(app => app.delete());
+        firebase.initializeApp(config);
+        const db = firebase.firestore();
+        
+        db.collection('users').limit(1).get().then(snap => {
+          document.getElementById('test4').innerHTML = `✅ Firestore bağlandı (${snap.size} user)`;
+          document.getElementById('test4').classList.add('ok');
+        }).catch(err => {
+          document.getElementById('test4').innerHTML = `❌ Firestore Hata: ${err.message}`;
+          document.getElementById('test4').classList.add('err');
+        });
+      } catch(e) {
+        document.getElementById('test4').innerHTML = `❌ Hata: ${e.message}`;
+        document.getElementById('test4').classList.add('err');
+      }
+    } else {
+      document.getElementById('test3').innerHTML = '❌ Firebase SDK yüklenmedi';
+      document.getElementById('test3').classList.add('err');
+    }
+  }, 2000);
+</script>
+
+</body>
+</html>
