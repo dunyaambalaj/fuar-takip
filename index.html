@@ -303,11 +303,13 @@ tr:hover td{background:rgba(255,255,255,.025)}
         <thead><tr>
           <th style="width:30px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll()" style="width:auto"></th>
           <th onclick="doSort('musteriAdi')">Müşteri ⇅</th>
+          <th onclick="doSort('cariNo')">Müşteri Kodu ⇅</th>
           <th onclick="doSort('firmaAdi')">Firma ⇅</th>
           <th onclick="doSort('temsilci')">Temsilci ⇅</th>
           <th onclick="doSort('il')">İl/İlçe ⇅</th>
           <th onclick="doSort('tutar')">Tutar ⇅</th>
           <th onclick="doSort('odemeDurumu')">Durum ⇅</th>
+          <th onclick="doSort('tarih')">Tarih ⇅</th>
           <th>İşlemler</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
@@ -566,6 +568,7 @@ function normStr(s){
   // Türkçe büyük/küçük harf duyarsız normalize
   return String(s||'').trim()
     .toLowerCase()
+    .replace(/\u0307/g,'')
     .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
     .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c')
     .replace(/\s+/g,'');
@@ -587,16 +590,16 @@ function importExcel(inp){
       const data=XLSX.utils.sheet_to_json(ws,{defval:''});
       if(!data.length){toast('Excel boş','error');return;}
       const map={
-        'musteri':'musteriAdi','musteriad':'musteriAdi','müşteri':'musteriAdi','müşteri adı':'musteriAdi','musteriadisoyadi':'musteriAdi','adsoyad':'musteriAdi','adisoyadi':'musteriAdi','ad':'musteriAdi','adi':'musteriAdi','isim':'musteriAdi','ad soyad':'musteriAdi','ad_soyad':'musteriAdi',
-        'firma':'firmaAdi','firmaad':'firmaAdi','firma adı':'firmaAdi','firmaadi':'firmaAdi',
+        'musteri':'musteriAdi','musteriad':'musteriAdi','musteriadi':'musteriAdi','musteriadisoyadi':'musteriAdi','adsoyad':'musteriAdi','adisoyadi':'musteriAdi','ad':'musteriAdi','adi':'musteriAdi','isim':'musteriAdi','adsoyad':'musteriAdi','ad_soyad':'musteriAdi',
+        'firma':'firmaAdi','firmaad':'firmaAdi','firmaadi':'firmaAdi',
         'temsilci':'temsilci','musteritemsilcisi':'temsilci','mustemsilci':'temsilci',
-        'il':'il','şehir':'il','sehir':'il','ili':'il',
-        'ilce':'ilce','ilçe':'ilce','ilçesi':'ilce','ilçe si':'ilce',
-        'tutar':'tutar','fiyat':'tutar','satış':'tutar','satis':'tutar','miktar':'tutar',
-        'durum':'odemeDurumu','ödeme durumu':'odemeDurumu','odeme durumu':'odemeDurumu','ödemedurum':'odemeDurumu','odemedurum':'odemeDurumu','ödeme':'odemeDurumu','odeme':'odemeDurumu','odemedurum':'odemeDurumu',
+        'il':'il','sehir':'il','ili':'il',
+        'ilce':'ilce','ilcesi':'ilce','ilcesi':'ilce',
+        'tutar':'tutar','fiyat':'tutar','satis':'tutar','miktar':'tutar',
+        'durum':'odemeDurumu','odemedurum':'odemeDurumu','odeme':'odemeDurumu','odemedurumu':'odemeDurumu','odemtamamlandi':'odemeDurumu',
         'tarih':'tarih','date':'tarih',
-        'notlar':'notlar','not':'notlar','açıklama':'notlar','aciklama':'notlar','notes':'notlar',
-        'cari no':'cariNo','carino':'cariNo','cari nos':'cariNo','müşteri kodu':'cariNo','musteri kodu':'cariNo','müşteri kod':'cariNo','musteri kod':'cariNo','müşterikodu':'cariNo','musteriKodu':'cariNo','musterikodu':'cariNo','kod':'cariNo','code':'cariNo','müşteri no':'cariNo','musteri no':'cariNo'
+        'notlar':'notlar','not':'notlar','aciklama':'notlar','notes':'notlar',
+        'carino':'cariNo','carinos':'cariNo','musterikodu':'cariNo','musterikod':'cariNo','kod':'cariNo','code':'cariNo','musterino':'cariNo'
       };
       let cnt=0;showLd(true);
       for(const row of data){
@@ -610,6 +613,14 @@ function importExcel(inp){
           if(!v)continue;
           if(field==='odemeDurumu')rec[field]=normDurum(v);
           else if(field==='tutar')rec[field]=parseFloat(v.replace(',','.'))||0;
+          else if(field==='tarih'){
+            // Excel serial date number conversion
+            const numVal=parseFloat(v);
+            if(!isNaN(numVal)&&numVal>40000&&numVal<60000){
+              const d=new Date((numVal-25569)*86400*1000);
+              rec[field]=d.toISOString().split('T')[0];
+            }else{rec[field]=v;}
+          }
           else rec[field]=v;
         }
         if((!rec.musteriAdi||rec.musteriAdi.trim()==='')&&(!rec.firmaAdi||rec.firmaAdi.trim()===''))continue;
@@ -703,11 +714,13 @@ function renderFlat(rows){
   document.getElementById('tbody').innerHTML=rows.map(r=>`<tr style="cursor:pointer">
     <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-id="${r.id}" onchange="updateBulkUI()"></td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')"><strong>${esc(r.musteriAdi||'')} </strong></td>
+    <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted)">${esc(r.cariNo||'–')}</td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')">${esc(r.firmaAdi||'')} </td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted)">${esc(r.temsilci||'–')}</td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted)">${esc(r.il||'')}${r.ilce?'/'+esc(r.ilce):''}</td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" ><strong>${fmt(r.tutar)}</strong></td>
     <td onclick="event.stopPropagation()"><select class="status-select" value="${r.odemeDurumu||'Tahsilat Bekliyor'}" onchange="updateRecStatus('${r.id}',this.value)"><option value="Tahsilat Bekliyor">⏳ Tahsilat Bekliyor</option><option value="Ödeme Tamamlandı">✓ Ödeme Tamamlandı</option><option value="İptal">✕ İptal</option></select></td>
+    <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted);white-space:nowrap">${esc(r.tarih||'–')}</td>
     <td onclick="event.stopPropagation()"><div class="act">
       <button class="btn btn-ghost btn-xs" onclick="editRec('${r.id}')">✏</button>
       <button class="btn btn-ghost btn-xs" onclick="showBdSingle('${r.id}')">📸</button>
@@ -735,15 +748,14 @@ function renderGrouped(rows){
     html+=`<tr class="musteri-group-row">
       <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox group-checkbox" data-musteri="${esc(musteri)}" onchange="toggleGroupCheckboxes(this)"></td>
       <td><strong>${esc(musteri)}</strong><br><span style="font-size:10px;color:var(--muted)">${items.length} alım · ${[...new Set(items.map(r=>r.firmaAdi).filter(Boolean))].length} firma</span></td>
+      <td style="color:var(--muted)">${esc(ilRow.cariNo||'–')}</td>
+      <td style="color:var(--muted)">${esc([...new Set(items.map(r=>r.firmaAdi).filter(Boolean))].join(', ')||'–')}</td>
       <td style="color:var(--muted)">${esc(ilRow.temsilci||'–')}</td>
       <td style="color:var(--muted)">${esc(ilRow.il||'')}${ilRow.ilce?'/'+esc(ilRow.ilce):''}</td>
       <td colspan="2"><strong>${fmt(toplam)}</strong>${bekleyen>0?`<br><span style="font-size:10px;color:var(--yellow)">⏳ ${fmt(bekleyen)}</span>`:''}</td>
       <td onclick="event.stopPropagation()"><select class="group-status-select" value="${durumVal}" onchange="updateGroupStatus('${esc(musteri)}',this.value)"><option value="Tahsilat Bekliyor">⏳ Tahsilat Bekliyor</option><option value="Ödeme Tamamlandı">✓ Ödeme Tamamlandı</option><option value="İptal">✕ İptal</option></select></td>
       <td onclick="event.stopPropagation()"><div class="act">
         <button class="btn btn-accent btn-xs" onclick="openMuDetail('${esc(musteri)}')">👁 Detay</button>
-        <button class="btn btn-ghost btn-xs" onclick="openModal()" title="Yeni alım ekle">+</button>
-      </div></td>
-    </tr>`;
         <button class="btn btn-ghost btn-xs" onclick="openModal()" title="Yeni alım ekle">+</button>
       </div></td>
     </tr>`;
@@ -1172,7 +1184,7 @@ function muBildiriByName(musteriAdi){
   if(!items.length)return;
   bdMode='musteri';bdSingleRec={musteriAdi,items};
   const toplam=items.reduce((s,r)=>s+(r.tutar||0),0);
-  const bekleyen=items.filter(r=>r.odemeDurumu==='Beklemede').reduce((s,r)=>s+(r.tutar||0),0);
+  const bekleyen=items.filter(r=>normalizeStatus(r.odemeDurumu)==='Tahsilat Bekliyor').reduce((s,r)=>s+(r.tutar||0),0);
   const ilRow=items[0];
   // Firma başına grupla: birden fazla kayıt varsa alt satır göster
   const firmaMap={};
@@ -1180,9 +1192,9 @@ function muBildiriByName(musteriAdi){
     const f=r.firmaAdi||'Bilinmiyor';
     if(!firmaMap[f])firmaMap[f]={toplam:0,durumlar:[],tarih:r.tarih||''};
     firmaMap[f].toplam+=(r.tutar||0);
-    firmaMap[f].durumlar.push(r.odemeDurumu||'Beklemede');
+    firmaMap[f].durumlar.push(normalizeStatus(r.odemeDurumu)||'Tahsilat Bekliyor');
   });
-  const durumRenkW=(d)=>{const c={Ödendi:'#16a34a',Beklemede:'#d97706',İptal:'#dc2626'};return `<span style="font-size:10px;font-weight:700;color:${c[d]||c.Beklemede};background:${c[d]||c.Beklemede}22;padding:1px 6px;border-radius:10px">${d}</span>`;};
+  const durumRenkW=(d)=>{const c={'Ödeme Tamamlandı':'#16a34a','Tahsilat Bekliyor':'#d97706','İptal':'#dc2626'};return `<span style="font-size:10px;font-weight:700;color:${c[d]||c['Tahsilat Bekliyor']};background:${c[d]||c['Tahsilat Bekliyor']}22;padding:1px 6px;border-radius:10px">${d}</span>`;};
   const firmaRows=Object.entries(firmaMap).map(([f,d])=>{
     // Birden fazla durum varsa hepsini göster, tek ise sadece biri
     const durumsUniq=[...new Set(d.durumlar)];
