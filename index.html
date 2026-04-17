@@ -56,6 +56,9 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;mi
 .fbar input,.fbar select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:7px;font-size:16px;flex:1;min-width:100px;outline:none}
 .fbar input:focus,.fbar select:focus{border-color:var(--orange)}
 .fbar select option{background:var(--surface)}
+.status-select,.group-status-select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:12px;outline:none;cursor:pointer}
+.status-select:focus,.group-status-select:focus{border-color:var(--orange)}
+.status-select option,.group-status-select option{background:var(--surface);color:var(--text)}
 
 /* ============ MASAÜSTÜ TABLO ============ */
 .tbl-wrap{overflow-x:auto;background:var(--card);border-radius:10px;border:1px solid var(--border)}
@@ -566,35 +569,35 @@ function importExcel(inp){
     try{
       const wb=XLSX.read(e.target.result,{type:'binary'});
       const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      if(rows.length<2){toast('Excel boş','error');return;}
-      // Başlıkları normalize et — Türkçe karakter + boşluk duyarsız
-      const hdrs=rows[0].map(h=>normStr(h));
+      const data=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!data.length){toast('Excel boş','error');return;}
       const map={
-        musteri:'musteriAdi',musteriad:'musteriAdi',musteriadisoyadi:'musteriAdi',adsoyad:'musteriAdi',adisoyadi:'musteriAdi',ad:'musteriAdi',adi:'musteriAdi',isim:'musteriAdi',ad_soyad:'musteriAdi',
-        firma:'firmaAdi',firmaad:'firmaAdi',firmaadi:'firmaAdi',
-        temsilci:'temsilci',musteritemsilcisi:'temsilci',mustemsilci:'temsilci',
-        il:'il',sehir:'il',
-        ilce:'ilce',ilçe:'ilce',
-        tutar:'tutar',fiyat:'tutar',satis:'tutar',miktar:'tutar',
-        durum:'odemeDurumu',odemedurum:'odemeDurumu',odeme:'odemeDurumu',odemedurum:'odemeDurumu',
-        tarih:'tarih',
-        notlar:'notlar',not:'notlar',aciklama:'notlar',
-        carino:'cariNo',musteri_kodu:'cariNo',kod:'cariNo',musteriKodu:'cariNo',carino:'cariNo',musterikodu:'cariNo'
+        'musteri':'musteriAdi','musteriad':'musteriAdi','müşteri':'musteriAdi','müşteri adı':'musteriAdi','musteriadisoyadi':'musteriAdi','adsoyad':'musteriAdi','adisoyadi':'musteriAdi','ad':'musteriAdi','adi':'musteriAdi','isim':'musteriAdi','ad soyad':'musteriAdi','ad_soyad':'musteriAdi',
+        'firma':'firmaAdi','firmaad':'firmaAdi','firma adı':'firmaAdi','firmaadi':'firmaAdi',
+        'temsilci':'temsilci','musteritemsilcisi':'temsilci','mustemsilci':'temsilci',
+        'il':'il','şehir':'il','sehir':'il','ili':'il',
+        'ilce':'ilce','ilçe':'ilce','ilçesi':'ilce','ilçe si':'ilce',
+        'tutar':'tutar','fiyat':'tutar','satış':'tutar','satis':'tutar','miktar':'tutar',
+        'durum':'odemeDurumu','ödeme durumu':'odemeDurumu','odeme durumu':'odemeDurumu','ödemedurum':'odemeDurumu','odemedurum':'odemeDurumu','ödeme':'odemeDurumu','odeme':'odemeDurumu','odemedurum':'odemeDurumu',
+        'tarih':'tarih','date':'tarih',
+        'notlar':'notlar','not':'notlar','açıklama':'notlar','aciklama':'notlar','notes':'notlar',
+        'cari no':'cariNo','carino':'cariNo','cari nos':'cariNo','müşteri kodu':'cariNo','musteri kodu':'cariNo','müşteri kod':'cariNo','musteri kod':'cariNo','müşterikodu':'cariNo','musteriKodu':'cariNo','musterikodu':'cariNo','kod':'cariNo','code':'cariNo','müşteri no':'cariNo','musteri no':'cariNo'
       };
-      const cols=hdrs.map(h=>map[h]||h);
       let cnt=0;showLd(true);
-      for(let i=1;i<rows.length;i++){
-        const r=rows[i];if(!r||!r.some(c=>String(c).trim()))continue;
+      for(const row of data){
+        if(!row||typeof row!=='object')continue;
+        if(!Object.values(row).some(v=>String(v).trim()))continue;
         const rec={musteriAdi:'',firmaAdi:'',temsilci:'',il:'',ilce:'',tutar:0,odemeDurumu:'Tahsilat Bekliyor',cariNo:'',tarih:today(),notlar:'',olusturma:new Date().toISOString(),guncelleme:new Date().toISOString()};
-        cols.forEach((f,j)=>{
-          if(!rec.hasOwnProperty(f))return;
-          const val=String(r[j]||'').trim();
-          if(f==='odemeDurumu')rec[f]=normDurum(val);
-          else rec[f]=val;
-        });
-        rec.tutar=parseFloat(String(rec.tutar).replace(',','.'))||0;
-        if(!rec.musteriAdi&&!rec.firmaAdi)continue;
+        for(const [key,val] of Object.entries(row)){
+          const field=map[normStr(key)];
+          if(!field||!rec.hasOwnProperty(field))continue;
+          const v=String(val||'').trim();
+          if(!v)continue;
+          if(field==='odemeDurumu')rec[field]=normDurum(v);
+          else if(field==='tutar')rec[field]=parseFloat(v.replace(',','.'))||0;
+          else rec[field]=v;
+        }
+        if((!rec.musteriAdi||rec.musteriAdi.trim()==='')&&(!rec.firmaAdi||rec.firmaAdi.trim()===''))continue;
         await db.collection('kayitlar').add(rec);cnt++;
       }
       showLd(false);toast(cnt+' kayıt içe aktarıldı ✓','success');
@@ -687,11 +690,10 @@ function renderFlat(rows){
     <td>${esc(r.temsilci||'–')}</td>
     <td style="color:var(--muted)">${esc(r.il||'')}${r.ilce?'/'+esc(r.ilce):''}</td>
     <td><strong>${fmt(r.tutar)}</strong></td>
-    <td>${badge(r.odemeDurumu)}</td>
+    <td onclick="event.stopPropagation()"><select class="status-select" value="${r.odemeDurumu||'Tahsilat Bekliyor'}" onchange="updateRecStatus('${r.id}',this.value)"><option value="Tahsilat Bekliyor">⏳ Tahsilat Bekliyor</option><option value="Ödeme Tamamlandı">✓ Ödeme Tamamlandı</option><option value="İptal">✕ İptal</option></select></td>
     <td onclick="event.stopPropagation()"><div class="act">
       <button class="btn btn-ghost btn-xs" onclick="editRec('${r.id}')">✏</button>
       <button class="btn btn-ghost btn-xs" onclick="showBdSingle('${r.id}')">📸</button>
-      <button class="btn ${normalizeStatus(r.odemeDurumu)==='Ödeme Tamamlandı'?'btn-ghost':'btn-green'} btn-xs" onclick="quickPay('${r.id}',event)">${normalizeStatus(r.odemeDurumu)==='Ödeme Tamamlandı'?'↩':'✓'}</button>
       <button class="btn btn-danger btn-xs" onclick="deleteRecord('${r.id}',event)">✕</button>
     </div></td>
   </tr>`).join('');
@@ -712,12 +714,13 @@ function renderGrouped(rows){
     const bekleyen=items.filter(r=>normalizeStatus(r.odemeDurumu)==='Tahsilat Bekliyor').reduce((s,r)=>s+(r.tutar||0),0);
     const tamOdendi=items.every(r=>normalizeStatus(r.odemeDurumu)==='Ödeme Tamamlandı');
     const ilRow=items[0];
-    html+=`<tr class="musteri-group-row" onclick="openMuDetail('${esc(musteri)}')">
+    const durumVal=tamOdendi?'Ödeme Tamamlandı':(bekleyen>0?'Tahsilat Bekliyor':'İptal');
+    html+=`<tr class="musteri-group-row">
       <td><strong>${esc(musteri)}</strong><br><span style="font-size:10px;color:var(--muted)">${items.length} alım · ${[...new Set(items.map(r=>r.firmaAdi).filter(Boolean))].length} firma</span></td>
       <td style="color:var(--muted)">${esc(ilRow.temsilci||'–')}</td>
       <td style="color:var(--muted)">${esc(ilRow.il||'')}${ilRow.ilce?'/'+esc(ilRow.ilce):''}</td>
       <td colspan="2"><strong>${fmt(toplam)}</strong>${bekleyen>0?`<br><span style="font-size:10px;color:var(--yellow)">⏳ ${fmt(bekleyen)}</span>`:''}</td>
-      <td>${tamOdendi?badge('Ödeme Tamamlandı'):(bekleyen>0?badge('Tahsilat Bekliyor'):badge('İptal'))}</td>
+      <td onclick="event.stopPropagation()"><select class="group-status-select" value="${durumVal}" onchange="updateGroupStatus('${esc(musteri)}',this.value)"><option value="Tahsilat Bekliyor">⏳ Tahsilat Bekliyor</option><option value="Ödeme Tamamlandı">✓ Ödeme Tamamlandı</option><option value="İptal">✕ İptal</option></select></td>
       <td onclick="event.stopPropagation()"><div class="act">
         <button class="btn btn-accent btn-xs" onclick="openMuDetail('${esc(musteri)}')">👁 Detay</button>
         <button class="btn btn-ghost btn-xs" onclick="openModal()" title="Yeni alım ekle">+</button>
@@ -858,6 +861,26 @@ async function tahsilFirma(firma,e){
 async function tahsilSec(){
   // Tümünü tahsil et ile aynı, iyileştirme: Sadece bekleyenleri seçili
   await tahsilTumu();
+}
+
+async function updateRecStatus(recId,newStatus){
+  if(!db)return;
+  try{
+    await db.collection('kayitlar').doc(recId).update({odemeDurumu:newStatus,guncelleme:new Date().toISOString()});
+    toast('Durum güncellendi ✓','success');
+  }catch(e){toast('Hata: '+e.message,'error');}
+}
+
+async function updateGroupStatus(musteriAdi,newStatus){
+  if(!db)return;
+  const items=data.filter(d=>d.musteriAdi===musteriAdi);
+  if(!items.length)return;
+  try{
+    for(const r of items){
+      await db.collection('kayitlar').doc(r.id).update({odemeDurumu:newStatus,guncelleme:new Date().toISOString()});
+    }
+    toast(`${items.length} kayıt güncellendi ✓`,'success');
+  }catch(e){toast('Hata: '+e.message,'error');}
 }
 
 // ============ FİRMA TAB ============
