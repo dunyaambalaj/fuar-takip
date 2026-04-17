@@ -333,7 +333,7 @@ tr:hover td{background:rgba(255,255,255,.025)}
           <th onclick="doSort('il')">İl/İlçe ⇅</th>
           <th onclick="doSort('tutar')">Tutar ⇅</th>
           <th onclick="doSort('odemeDurumu')">Durum ⇅</th>
-          <th onclick="doSort('tarih')">Tarih ⇅</th>
+          <th id="thTarih" onclick="doSort('tarih')">Tarih ⇅</th>
           <th>İşlemler</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
@@ -754,6 +754,7 @@ function renderTable(){
   const rows=getFiltered();
   const grouped=document.getElementById('groupByMusteri').checked;
   document.getElementById('thFirma').style.display=grouped?'none':'';
+  document.getElementById('thTarih').style.display=grouped?'none':'';
   document.getElementById('emMus').style.display=rows.length?'none':'';
   document.getElementById('rowCount').textContent=rows.length+' kayıt ('+(grouped?'müşteri bazlı':'tek tek')+')';
   if(grouped){renderGrouped(rows);}else{renderFlat(rows);}
@@ -770,7 +771,7 @@ function renderFlat(rows){
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted)">${esc(r.temsilci||'–')}</td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted)">${esc(r.il||'')}${r.ilce?'/'+esc(r.ilce):''}</td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" ><strong>${fmt(r.tutar)}</strong></td>
-    <td onclick="event.stopPropagation()"><select class="status-select" value="${r.odemeDurumu||'Tahsilat Bekliyor'}" onchange="updateRecStatus('${r.id}',this.value)"><option value="Tahsilat Bekliyor">⏳ Tahsilat Bekliyor</option><option value="Ödeme Tamamlandı">✓ Ödeme Tamamlandı</option><option value="İptal">✕ İptal</option></select></td>
+    <td onclick="event.stopPropagation()"><select class="status-select" onchange="updateRecStatus('${r.id}',this.value)"><option value="Tahsilat Bekliyor" ${normalizeStatus(r.odemeDurumu||'Tahsilat Bekliyor')==='Tahsilat Bekliyor'?'selected':''}>⏳ Tahsilat Bekliyor</option><option value="Ödeme Tamamlandı" ${normalizeStatus(r.odemeDurumu||'Tahsilat Bekliyor')==='Ödeme Tamamlandı'?'selected':''}>✓ Ödeme Tamamlandı</option><option value="İptal" ${normalizeStatus(r.odemeDurumu||'Tahsilat Bekliyor')==='İptal'?'selected':''}>✕ İptal</option></select></td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted);white-space:nowrap">${esc(r.tarih||'–')}</td>
     <td onclick="event.stopPropagation()"><div class="act">
       <button class="btn btn-ghost btn-xs" onclick="editRec('${r.id}')">✏</button>
@@ -803,8 +804,8 @@ function renderGrouped(rows){
       <td class="colFirma" style="display:none">${esc([...new Set(items.map(r=>r.firmaAdi).filter(Boolean))].join(', ')||'–')}</td>
       <td style="color:var(--muted)">${esc(ilRow.temsilci||'–')}</td>
       <td style="color:var(--muted)">${esc(ilRow.il||'')}${ilRow.ilce?'/'+esc(ilRow.ilce):''}</td>
-      <td colspan="2"><strong>${fmt(toplam)}</strong>${bekleyen>0?`<br><span style="font-size:10px;color:var(--yellow)">⏳ ${fmt(bekleyen)}</span>`:''}</td>
-      <td onclick="event.stopPropagation()"><select class="group-status-select" value="${durumVal}" onchange="updateGroupStatus('${esc(musteri)}',this.value)"><option value="Tahsilat Bekliyor">⏳ Tahsilat Bekliyor</option><option value="Ödeme Tamamlandı">✓ Ödeme Tamamlandı</option><option value="İptal">✕ İptal</option></select></td>
+      <td><strong>${fmt(toplam)}</strong>${bekleyen>0?`<br><span style="font-size:10px;color:var(--yellow)">⏳ ${fmt(bekleyen)}</span>`:''}</td>
+      <td onclick="event.stopPropagation()"><select class="group-status-select" onchange="updateGroupStatus('${esc(musteri)}',this.value)"><option value="Tahsilat Bekliyor" ${durumVal==='Tahsilat Bekliyor'?'selected':''}>⏳ Tahsilat Bekliyor</option><option value="Ödeme Tamamlandı" ${durumVal==='Ödeme Tamamlandı'?'selected':''}>✓ Ödeme Tamamlandı</option><option value="İptal" ${durumVal==='İptal'?'selected':''}>✕ İptal</option></select></td>
       <td onclick="event.stopPropagation()"><div class="act">
         <button class="btn btn-accent btn-xs" onclick="openMuDetail('${esc(musteri)}')">👁 Detay</button>
         <button class="btn btn-ghost btn-xs" onclick="openModal()" title="Yeni alım ekle">+</button>
@@ -951,6 +952,9 @@ async function updateRecStatus(recId,newStatus){
   if(!db)return;
   try{
     await db.collection('kayitlar').doc(recId).update({odemeDurumu:newStatus,guncelleme:new Date().toISOString()});
+    const rec=data.find(d=>d.id===recId);
+    if(rec)rec.odemeDurumu=newStatus;
+    renderTable();
     toast('Durum güncellendi ✓','success');
   }catch(e){toast('Hata: '+e.message,'error');}
 }
@@ -962,7 +966,9 @@ async function updateGroupStatus(musteriAdi,newStatus){
   try{
     for(const r of items){
       await db.collection('kayitlar').doc(r.id).update({odemeDurumu:newStatus,guncelleme:new Date().toISOString()});
+      r.odemeDurumu=newStatus;
     }
+    renderTable();
     toast(`${items.length} kayıt güncellendi ✓`,'success');
   }catch(e){toast('Hata: '+e.message,'error');}
 }
