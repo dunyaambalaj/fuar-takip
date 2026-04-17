@@ -2,7 +2,9 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Dünya Ambalaj - Fuar Tahsilat</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -51,7 +53,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;mi
 .stat-l{font-size:10px;color:var(--muted);margin-top:2px}
 
 .fbar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;background:var(--card);padding:9px;border-radius:10px;border:1px solid var(--border)}
-.fbar input,.fbar select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:7px;font-size:12px;flex:1;min-width:100px;outline:none}
+.fbar input,.fbar select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:7px;font-size:16px;flex:1;min-width:100px;outline:none}
 .fbar input:focus,.fbar select:focus{border-color:var(--orange)}
 .fbar select option{background:var(--surface)}
 
@@ -133,7 +135,7 @@ tr:hover td{background:rgba(255,255,255,.025)}
 .fgrp{display:flex;flex-direction:column;gap:5px}
 .fgrp.full{grid-column:1/-1}
 .fgrp label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
-.fgrp input,.fgrp select,.fgrp textarea{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:7px;font-size:13px;outline:none}
+.fgrp input,.fgrp select,.fgrp textarea{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:7px;font-size:16px;outline:none}
 .fgrp input:focus,.fgrp select:focus,.fgrp textarea:focus{border-color:var(--accent)}
 .fgrp textarea{min-height:55px;resize:vertical}
 .fgrp select option{background:var(--surface)}
@@ -244,8 +246,8 @@ tr:hover td{background:rgba(255,255,255,.025)}
 <div class="tabs">
   <div class="tab active" onclick="goTab(0,this)">📋 Müşteriler</div>
   <div class="tab" onclick="goTab(1,this)">🏢 Firmalar</div>
-  <div class="tab" onclick="goTab(2,this)">👤 Temsilciler</div>
-  <div class="tab" onclick="goTab(3,this)">⚙ Kurulum</div>
+  <div class="tab" onclick="goTab(2,this);requirePassword(2)">👤 Temsilciler</div>
+  <div class="tab" onclick="goTab(3,this);requirePassword(3)">⚙ Kurulum</div>
 </div>
 
 <div class="content">
@@ -268,7 +270,7 @@ tr:hover td{background:rgba(255,255,255,.025)}
       <select id="ft" onchange="renderTable()"><option value="">Tüm Temsilciler</option></select>
       <select id="fd" onchange="renderTable()">
         <option value="">Tüm Durumlar</option>
-        <option>Ödendi</option><option>Beklemede</option><option>İptal</option>
+        <option>Tahsilat Bekliyor</option><option>Ödeme Tamamlandı</option><option>İptal</option>
       </select>
       <select id="fi" onchange="renderTable()"><option value="">Tüm İller</option></select>
     </div>
@@ -312,7 +314,7 @@ tr:hover td{background:rgba(255,255,255,.025)}
         <button class="btn btn-ghost btn-xs" onclick="closeDetail('firmaDetail')">✕ Kapat</button>
       </div>
       <div class="fbar" style="margin-bottom:10px">
-        <select id="fdDurum" onchange="renderFirmaDetail()"><option value="">Tüm Durumlar</option><option>Ödendi</option><option>Beklemede</option><option>İptal</option></select>
+        <select id="fdDurum" onchange="renderFirmaDetail()"><option value="">Tüm Durumlar</option><option>Ödeme Tamamlandı</option><option>Tahsilat Bekliyor</option><option>İptal</option></select>
       </div>
       <div class="tbl-wrap">
         <table><thead><tr><th>Müşteri</th><th>Temsilci</th><th>İl/İlçe</th><th>Tutar</th><th>Durum</th><th>İşlemler</th></tr></thead>
@@ -332,7 +334,7 @@ tr:hover td{background:rgba(255,255,255,.025)}
         <button class="btn btn-ghost btn-xs" onclick="closeDetail('temDetail')">✕ Kapat</button>
       </div>
       <div class="fbar" style="margin-bottom:10px">
-        <select id="tdDurum" onchange="renderTemDetail()"><option value="">Tüm Durumlar</option><option>Ödendi</option><option>Beklemede</option><option>İptal</option></select>
+        <select id="tdDurum" onchange="renderTemDetail()"><option value="">Tüm Durumlar</option><option>Ödeme Tamamlandı</option><option>Tahsilat Bekliyor</option><option>İptal</option></select>
         <select id="tdFirma" onchange="renderTemDetail()"><option value="">Tüm Firmalar</option></select>
       </div>
       <div class="tbl-wrap">
@@ -361,7 +363,7 @@ service cloud.firestore {
 }</div>
         </div>
       </div>
-      <div class="step"><div class="sn">2</div><div class="st"><strong>Excel İçe Aktarma:</strong> "📥 Excel" → .xlsx veya .csv seçin.<br>Sütunlar: musteriAdi | firmaAdi | temsilci | il | ilce | tutar | odemeDurumu | tarih | notlar</div></div>
+      <div class="step"><div class="sn">2</div><div class="st"><strong>Excel İçe Aktarma:</strong> "📥 Excel" → .xlsx veya .csv seçin.<br>Sütunlar: musteriAdi | cariNo | firmaAdi | temsilci | il | ilce | tutar | odemeDurumu | tarih | notlar</div></div>
       <div class="step"><div class="sn">3</div><div class="st"><strong>Müşteri Bazlı Tahsilat:</strong> Müşteri satırına veya kartına tıklayın → Firma firma detay + Tümünü Tahsil Et butonu çıkar.</div></div>
       <div class="step"><div class="sn">4</div><div class="st"><strong>Mobil:</strong> Kart görünümü otomatik devreye girer. Kartlara tıklayarak müşteri detayına erişin.</div></div>
       <div class="wbox">⚠ Herkese açık Firestore kuralları kullanıyor — URL'yi sadece güvendiğiniz kişilerle paylaşın.</div>
@@ -385,12 +387,26 @@ service cloud.firestore {
 
 </div><!-- /content -->
 
+<!-- PASSWORD MODAL -->
+<div class="overlay" id="passwordModal" style="display:none">
+  <div class="modal" style="max-width:320px">
+    <h2>🔒 Erişim Korumalı</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Bu bölüme erişmek için şifreyi girin.</p>
+    <div class="fgrp"><label>Şifre</label><input id="pwInput" type="password" placeholder="" autocomplete="off" onkeypress="if(event.key==='Enter')checkPassword()"></div>
+    <div class="m-acts" style="margin-top:16px">
+      <button class="btn btn-ghost" onclick="cancelPassword()">İptal</button>
+      <button class="btn btn-accent" onclick="checkPassword()">Doğrula</button>
+    </div>
+  </div>
+</div>
+
 <!-- KAYIT MODAL (yeni/düzenle) -->
 <div class="overlay" id="kayitModal">
   <div class="modal">
     <h2 id="mTitle">+ Yeni Kayıt</h2>
     <div class="fg">
       <div class="fgrp full"><label>Müşteri Adı *</label><input id="fMu" placeholder="Ad Soyad"></div>
+      <div class="fgrp"><label>Müşteri Kodu</label><input id="fCa" placeholder="Cari No / Kod"></div>
       <div class="fgrp"><label>Firma Adı *</label><input id="fFi" placeholder="Firma" list="fiList"><datalist id="fiList"></datalist></div>
       <div class="fgrp"><label>Temsilci</label><input id="fTe" placeholder="Temsilci" list="teList"><datalist id="teList"></datalist></div>
       <div class="fgrp"><label>Tutar (₺)</label><input id="fTu" type="number" placeholder="0" step="0.01" min="0"></div>
@@ -398,8 +414,8 @@ service cloud.firestore {
       <div class="fgrp"><label>İlçe</label><input id="fIlc" placeholder="İlçe"></div>
       <div class="fgrp"><label>Ödeme Durumu</label>
         <select id="fDu">
-          <option value="Beklemede">Beklemede</option>
-          <option value="Ödendi">Ödendi</option>
+          <option value="Tahsilat Bekliyor">Tahsilat Bekliyor</option>
+          <option value="Ödeme Tamamlandı">Ödeme Tamamlandı</option>
           <option value="İptal">İptal</option>
         </select></div>
       <div class="fgrp"><label>Tarih</label><input id="fTar" type="date"></div>
@@ -430,7 +446,7 @@ service cloud.firestore {
         <div class="amount" id="muTotal">₺0</div>
       </div>
       <div class="mu-bekleyen-bar" id="muBekBar">
-        <div class="label">⏳ Bekleyen Tahsilat</div>
+        <div class="label">⏳ Tahsilat Bekliyor</div>
         <div class="amount" id="muBek">₺0</div>
       </div>
     </div>
@@ -499,7 +515,7 @@ async function saveRecord(){
   if(!db){toast('Firebase bağlı değil!','error');return;}
   const mu=v('fMu'),fi=v('fFi');
   if(!mu||!fi){toast('Müşteri Adı ve Firma zorunlu!','error');return;}
-  const rec={musteriAdi:mu,firmaAdi:fi,temsilci:v('fTe'),tutar:parseFloat(v('fTu'))||0,il:v('fIl'),ilce:v('fIlc'),odemeDurumu:v('fDu')||'Beklemede',tarih:v('fTar')||today(),notlar:v('fNo'),guncelleme:new Date().toISOString()};
+  const rec={musteriAdi:mu,cariNo:v('fCa'),firmaAdi:fi,temsilci:v('fTe'),tutar:parseFloat(v('fTu'))||0,il:v('fIl'),ilce:v('fIlc'),odemeDurumu:v('fDu')||'Tahsilat Bekliyor',tarih:v('fTar')||today(),notlar:v('fNo'),guncelleme:new Date().toISOString()};
   try{
     if(editId){await db.collection('kayitlar').doc(editId).update(rec);toast('Güncellendi ✓','success');}
     else{await db.collection('kayitlar').add({...rec,olusturma:new Date().toISOString()});toast('Eklendi ✓','success');}
@@ -517,9 +533,9 @@ async function quickPay(id,e){
   if(!db)return;
   const r=data.find(d=>d.id===id);if(!r)return;
   // 3 seçenek sun — mevcut durumu hariç
-  const seçenekler=['Ödendi','Beklemede','İptal'].filter(s=>s!==r.odemeDurumu);
+  const seçenekler=['Ödeme Tamamlandı','Tahsilat Bekliyor','İptal'].filter(s=>normalizeStatus(s)!==normalizeStatus(r.odemeDurumu));
   const seçim=seçenekler.length===1?seçenekler[0]:
-    (window.confirm(`"${r.musteriAdi}"\n\n[Tamam] = Ödendi\n[İptal] = ${seçenekler[1]||'Beklemede'}`)?'Ödendi':seçenekler[1]||'Beklemede');
+    (window.confirm(`"${r.musteriAdi}"\n\n[Tamam] = Ödeme Tamamlandı\n[İptal] = ${seçenekler[1]||'Tahsilat Bekliyor'}`)?'Ödeme Tamamlandı':seçenekler[1]||'Tahsilat Bekliyor');
   if(!confirm(`"${r.musteriAdi}" → "${seçim}" yapılsın mı?`))return;
   try{
     await db.collection('kayitlar').doc(id).update({odemeDurumu:seçim,guncelleme:new Date().toISOString()});
@@ -538,9 +554,9 @@ function normStr(s){
 }
 function normDurum(s){
   const v=normStr(s);
-  if(v==='odendi'||v==='odeme'||v==='tahsil'||v==='tamamlandi'||v==='tamamlandi'||v==='paid')return 'Ödendi';
-  if(v==='iptal'||v==='cancel'||v==='iptal')return 'İptal';
-  return 'Beklemede';
+  if(v==='odendi'||v==='odeme'||v==='tahsil'||v==='tamamlandi'||v==='paid'||v==='odemtamamlandi')return 'Ödeme Tamamlandı';
+  if(v==='iptal'||v==='cancel')return 'İptal';
+  return 'Tahsilat Bekliyor';
 }
 function importExcel(inp){
   const file=inp.files[0];if(!file)return;
@@ -555,21 +571,22 @@ function importExcel(inp){
       // Başlıkları normalize et — Türkçe karakter + boşluk duyarsız
       const hdrs=rows[0].map(h=>normStr(h));
       const map={
-        musteri:'musteriAdi',musteriad:'musteriAdi',musteriadisoyadi:'musteriAdi','musteriadisoyadi':'musteriAdi','adsoyad':'musteriAdi','adisoyadi':'musteriAdi',
-        firma:'firmaAdi',firmaad:'firmaAdi','firmaadi':'firmaAdi',
-        temsilci:'temsilci','musteriTemsilcisi':'temsilci',mustemsilci:'temsilci',
-        il:'il','sehir':'il',sehir:'il',
-        ilce:'ilce','ilce':'ilce',
-        tutar:'tutar',fiyat:'tutar','satis':'tutar',miktar:'tutar',
-        durum:'odemeDurumu','odemedurum':'odemeDurumu','odeme':'odemeDurumu',
-        tarih:'tarih',tarih:'tarih',
-        notlar:'notlar',not:'notlar','aciklama':'notlar'
+        musteri:'musteriAdi',musteriad:'musteriAdi',musteriadisoyadi:'musteriAdi',adsoyad:'musteriAdi',adisoyadi:'musteriAdi',ad:'musteriAdi',adi:'musteriAdi',isim:'musteriAdi',ad_soyad:'musteriAdi',
+        firma:'firmaAdi',firmaad:'firmaAdi',firmaadi:'firmaAdi',
+        temsilci:'temsilci',musteritemsilcisi:'temsilci',mustemsilci:'temsilci',
+        il:'il',sehir:'il',
+        ilce:'ilce',ilçe:'ilce',
+        tutar:'tutar',fiyat:'tutar',satis:'tutar',miktar:'tutar',
+        durum:'odemeDurumu',odemedurum:'odemeDurumu',odeme:'odemeDurumu',odemedurum:'odemeDurumu',
+        tarih:'tarih',
+        notlar:'notlar',not:'notlar',aciklama:'notlar',
+        carino:'cariNo',musteri_kodu:'cariNo',kod:'cariNo',musteriKodu:'cariNo',carino:'cariNo',musterikodu:'cariNo'
       };
       const cols=hdrs.map(h=>map[h]||h);
       let cnt=0;showLd(true);
       for(let i=1;i<rows.length;i++){
         const r=rows[i];if(!r||!r.some(c=>String(c).trim()))continue;
-        const rec={musteriAdi:'',firmaAdi:'',temsilci:'',il:'',ilce:'',tutar:0,odemeDurumu:'Beklemede',tarih:today(),notlar:'',olusturma:new Date().toISOString(),guncelleme:new Date().toISOString()};
+        const rec={musteriAdi:'',firmaAdi:'',temsilci:'',il:'',ilce:'',tutar:0,odemeDurumu:'Tahsilat Bekliyor',cariNo:'',tarih:today(),notlar:'',olusturma:new Date().toISOString(),guncelleme:new Date().toISOString()};
         cols.forEach((f,j)=>{
           if(!rec.hasOwnProperty(f))return;
           const val=String(r[j]||'').trim();
@@ -588,7 +605,7 @@ function importExcel(inp){
 }
 function exportExcel(){
   if(!data.length){toast('Veri yok','error');return;}
-  const rows=data.map(r=>({"Müşteri Adı":r.musteriAdi||'',"Firma Adı":r.firmaAdi||'',"Temsilci":r.temsilci||'',"İl":r.il||'',"İlçe":r.ilce||'',"Tutar":r.tutar||0,"Ödeme Durumu":r.odemeDurumu||'',"Tarih":r.tarih||'',"Notlar":r.notlar||''}));
+  const rows=data.map(r=>({"Müşteri Adı":r.musteriAdi||'',"Müşteri Kodu":r.cariNo||'',"Firma Adı":r.firmaAdi||'',"Temsilci":r.temsilci||'',"İl":r.il||'',"İlçe":r.ilce||'',"Tutar":r.tutar||0,"Ödeme Durumu":r.odemeDurumu||'',"Tarih":r.tarih||'',"Notlar":r.notlar||''}));
   const ws=XLSX.utils.json_to_sheet(rows);
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Kayitlar');
   XLSX.writeFile(wb,'dunya_ambalaj_fuar_'+today()+'.xlsx');toast('Excel indirildi ✓','success');
@@ -601,13 +618,20 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function today(){return new Date().toISOString().split('T')[0];}
 function v(id){return document.getElementById(id).value;}
 function sv(id,val){document.getElementById(id).value=val||'';}
-function badge(d){const m={Ödendi:'bg',Beklemede:'by',İptal:'br'};return `<span class="badge ${m[d]||'by'}">${esc(d||'Beklemede')}</span>`;}
-function badgeW(d){const c={Ödendi:'#16a34a',Beklemede:'#d97706',İptal:'#dc2626'};return `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;background:${c[d]||c.Beklemede}">${esc(d||'Beklemede')}</span>`;}
-
+function badge(d){
+  const normalized=normalizeStatus(d);
+  const m={'Ödeme Tamamlandı':'bg','Tahsilat Bekliyor':'by','İptal':'br'};
+  return `<span class="badge ${m[normalized]||'by'}">${esc(normalized||'Tahsilat Bekliyor')}</span>`;
+}
+function badgeW(d){
+  const normalized=normalizeStatus(d);
+  const c={'Ödeme Tamamlandı':'#16a34a','Tahsilat Bekliyor':'#d97706','İptal':'#dc2626'};
+  return `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;background:${c[normalized]||c['Tahsilat Bekliyor']}">${esc(normalized||'Tahsilat Bekliyor')}</span>`;
+}
 function updateStats(){
   const tot=data.reduce((s,d)=>s+(d.tutar||0),0);
-  const tah=data.filter(d=>d.odemeDurumu==='Ödendi').reduce((s,d)=>s+(d.tutar||0),0);
-  const bek=data.filter(d=>d.odemeDurumu==='Beklemede').reduce((s,d)=>s+(d.tutar||0),0);
+  const tah=data.filter(d=>normalizeStatus(d.odemeDurumu)==='Ödeme Tamamlandı').reduce((s,d)=>s+(d.tutar||0),0);
+  const bek=data.filter(d=>normalizeStatus(d.odemeDurumu)==='Tahsilat Bekliyor').reduce((s,d)=>s+(d.tutar||0),0);
   const unik=[...new Set(data.map(d=>d.musteriAdi).filter(Boolean))];
   const fir=[...new Set(data.map(d=>d.firmaAdi).filter(Boolean))];
   const tem=[...new Set(data.map(d=>d.temsilci).filter(Boolean))];
@@ -629,13 +653,17 @@ function updateFilters(){
 function updSel(id,items,ph){const el=document.getElementById(id),cv=el.value;el.innerHTML=`<option value="">${ph}</option>`+items.map(i=>`<option value="${esc(i)}"${i===cv?' selected':''}>${esc(i)}</option>`).join('');}
 function updDL(id,items){document.getElementById(id).innerHTML=items.map(i=>`<option value="${esc(i)}">`).join('');}
 
+function normalizeStatus(s){
+  const m={'Ödeme Tamamlandı':'Ödeme Tamamlandı','Tahsilat Bekliyor':'Tahsilat Bekliyor','İptal':'İptal','Ödendi':'Ödeme Tamamlandı','Beklemede':'Tahsilat Bekliyor'};
+  return m[s]||s;
+}
 function getFiltered(){
   const a=normStr(v('fa')||''),fi=v('ff'),te=v('ft'),du=v('fd'),il=v('fi');
   let rows=[...data];
   if(a)rows=rows.filter(r=>[r.musteriAdi,r.firmaAdi,r.temsilci,r.il,r.ilce].some(x=>normStr(x||'').includes(a)));
   if(fi)rows=rows.filter(r=>r.firmaAdi===fi);
   if(te)rows=rows.filter(r=>r.temsilci===te);
-  if(du)rows=rows.filter(r=>r.odemeDurumu===du);
+  if(du)rows=rows.filter(r=>normalizeStatus(r.odemeDurumu)===normalizeStatus(du));
   if(il)rows=rows.filter(r=>r.il===il);
   if(sortField){rows.sort((a,b)=>{let va=a[sortField],vb=b[sortField];if(sortField==='tutar'){va=+va||0;vb=+vb||0;}else{va=(va||'').toString().toLowerCase();vb=(vb||'').toString().toLowerCase();}return va<vb?-sortDir:va>vb?sortDir:0;});}
   return rows;
@@ -663,7 +691,7 @@ function renderFlat(rows){
     <td onclick="event.stopPropagation()"><div class="act">
       <button class="btn btn-ghost btn-xs" onclick="editRec('${r.id}')">✏</button>
       <button class="btn btn-ghost btn-xs" onclick="showBdSingle('${r.id}')">📸</button>
-      <button class="btn ${r.odemeDurumu==='Ödendi'?'btn-ghost':'btn-green'} btn-xs" onclick="quickPay('${r.id}',event)">${r.odemeDurumu==='Ödendi'?'↩':'✓'}</button>
+      <button class="btn ${normalizeStatus(r.odemeDurumu)==='Ödeme Tamamlandı'?'btn-ghost':'btn-green'} btn-xs" onclick="quickPay('${r.id}',event)">${normalizeStatus(r.odemeDurumu)==='Ödeme Tamamlandı'?'↩':'✓'}</button>
       <button class="btn btn-danger btn-xs" onclick="deleteRecord('${r.id}',event)">✕</button>
     </div></td>
   </tr>`).join('');
@@ -681,15 +709,15 @@ function renderGrouped(rows){
   Object.keys(map).sort().forEach(musteri=>{
     const items=map[musteri];
     const toplam=items.reduce((s,r)=>s+(r.tutar||0),0);
-    const bekleyen=items.filter(r=>r.odemeDurumu==='Beklemede').reduce((s,r)=>s+(r.tutar||0),0);
-    const tamOdendi=items.every(r=>r.odemeDurumu==='Ödendi');
+    const bekleyen=items.filter(r=>normalizeStatus(r.odemeDurumu)==='Tahsilat Bekliyor').reduce((s,r)=>s+(r.tutar||0),0);
+    const tamOdendi=items.every(r=>normalizeStatus(r.odemeDurumu)==='Ödeme Tamamlandı');
     const ilRow=items[0];
     html+=`<tr class="musteri-group-row" onclick="openMuDetail('${esc(musteri)}')">
       <td><strong>${esc(musteri)}</strong><br><span style="font-size:10px;color:var(--muted)">${items.length} alım · ${[...new Set(items.map(r=>r.firmaAdi).filter(Boolean))].length} firma</span></td>
       <td style="color:var(--muted)">${esc(ilRow.temsilci||'–')}</td>
       <td style="color:var(--muted)">${esc(ilRow.il||'')}${ilRow.ilce?'/'+esc(ilRow.ilce):''}</td>
       <td colspan="2"><strong>${fmt(toplam)}</strong>${bekleyen>0?`<br><span style="font-size:10px;color:var(--yellow)">⏳ ${fmt(bekleyen)}</span>`:''}</td>
-      <td>${tamOdendi?badge('Ödendi'):(bekleyen>0?badge('Beklemede'):badge('İptal'))}</td>
+      <td>${tamOdendi?badge('Ödeme Tamamlandı'):(bekleyen>0?badge('Tahsilat Bekliyor'):badge('İptal'))}</td>
       <td onclick="event.stopPropagation()"><div class="act">
         <button class="btn btn-accent btn-xs" onclick="openMuDetail('${esc(musteri)}')">👁 Detay</button>
         <button class="btn btn-ghost btn-xs" onclick="openModal()" title="Yeni alım ekle">+</button>
@@ -713,11 +741,11 @@ function renderMobList(rows){
   el.innerHTML=Object.keys(map).sort().map(musteri=>{
     const items=map[musteri];
     const toplam=items.reduce((s,r)=>s+(r.tutar||0),0);
-    const bekleyen=items.filter(r=>r.odemeDurumu==='Beklemede').reduce((s,r)=>s+(r.tutar||0),0);
-    const tahsil=items.filter(r=>r.odemeDurumu==='Ödendi').reduce((s,r)=>s+(r.tutar||0),0);
+    const bekleyen=items.filter(r=>normalizeStatus(r.odemeDurumu)==='Tahsilat Bekliyor').reduce((s,r)=>s+(r.tutar||0),0);
+    const tahsil=items.filter(r=>normalizeStatus(r.odemeDurumu)==='Ödeme Tamamlandı').reduce((s,r)=>s+(r.tutar||0),0);
     const firmalar=[...new Set(items.map(r=>r.firmaAdi).filter(Boolean))];
     const ilRow=items[0];
-    const tamOdendi=items.every(r=>r.odemeDurumu==='Ödendi');
+    const tamOdendi=items.every(r=>normalizeStatus(r.odemeDurumu)==='Ödeme Tamamlandı');
     return `<div class="mob-card" onclick="openMuDetail('${esc(musteri)}')">
       <div class="mob-card-top">
         <div>
@@ -757,7 +785,7 @@ function refreshMuDetail(){
   const items=data.filter(d=>d.musteriAdi===muRec);
   if(!items.length){closeMuDetail();return;}
   const toplam=items.reduce((s,r)=>s+(r.tutar||0),0);
-  const bekleyen=items.filter(r=>r.odemeDurumu==='Beklemede').reduce((s,r)=>s+(r.tutar||0),0);
+  const bekleyen=items.filter(r=>normalizeStatus(r.odemeDurumu)==='Tahsilat Bekliyor').reduce((s,r)=>s+(r.tutar||0),0);
   const ilRow=items[0];
   document.getElementById('muName').textContent=muRec;
   const meta=[];
@@ -778,8 +806,8 @@ function refreshMuDetail(){
   });
   document.getElementById('muFirmaList').innerHTML=Object.entries(firmaMap).map(([firma,recs])=>{
     const ft=recs.reduce((s,r)=>s+(r.tutar||0),0);
-    const fb=recs.filter(r=>r.odemeDurumu==='Beklemede').reduce((s,r)=>s+(r.tutar||0),0);
-    const allOk=recs.every(r=>r.odemeDurumu==='Ödendi');
+    const fb=recs.filter(r=>normalizeStatus(r.odemeDurumu)==='Tahsilat Bekliyor').reduce((s,r)=>s+(r.tutar||0),0);
+    const allOk=recs.every(r=>normalizeStatus(r.odemeDurumu)==='Ödeme Tamamlandı');
     const allIds=recs.map(r=>r.id);
     return `<div class="mu-firma-item" style="${allOk?'opacity:.65':''}">
       <div>
@@ -798,14 +826,14 @@ function refreshMuDetail(){
 
 async function tahsilTumu(){
   if(!muRec||!db)return;
-  const bekleyen=data.filter(d=>d.musteriAdi===muRec&&d.odemeDurumu==='Beklemede');
+  const bekleyen=data.filter(d=>d.musteriAdi===muRec&&normalizeStatus(d.odemeDurumu)==='Tahsilat Bekliyor');
   if(!bekleyen.length){toast('Bekleyen kayıt yok','error');return;}
   const toplam=bekleyen.reduce((s,r)=>s+(r.tutar||0),0);
-  if(!confirm(`${muRec} için ${bekleyen.length} kayıt (${fmt(toplam)}) "Ödendi" yapılsın mı?`))return;
+  if(!confirm(`${muRec} için ${bekleyen.length} kayıt (${fmt(toplam)}) "Ödeme Tamamlandı" yapılsın mı?`))return;
   showLd(true);
   try{
     for(const r of bekleyen){
-      await db.collection('kayitlar').doc(r.id).update({odemeDurumu:'Ödendi',guncelleme:new Date().toISOString()});
+      await db.collection('kayitlar').doc(r.id).update({odemeDurumu:'Ödeme Tamamlandı',guncelleme:new Date().toISOString()});
     }
     showLd(false);toast(`${bekleyen.length} kayıt tahsil edildi ✓`,'success');
   }catch(e){showLd(false);toast('Hata: '+e.message,'error');}
@@ -814,14 +842,14 @@ async function tahsilTumu(){
 async function tahsilFirma(firma,e){
   if(e)e.stopPropagation();
   if(!muRec||!db)return;
-  const bekleyen=data.filter(d=>d.musteriAdi===muRec&&d.firmaAdi===firma&&d.odemeDurumu==='Beklemede');
+  const bekleyen=data.filter(d=>d.musteriAdi===muRec&&d.firmaAdi===firma&&normalizeStatus(d.odemeDurumu)==='Tahsilat Bekliyor');
   if(!bekleyen.length){toast('Bekleyen kayıt yok','error');return;}
   const toplam=bekleyen.reduce((s,r)=>s+(r.tutar||0),0);
   if(!confirm(`${firma} için ${fmt(toplam)} tahsil edilsin mi?`))return;
   showLd(true);
   try{
     for(const r of bekleyen){
-      await db.collection('kayitlar').doc(r.id).update({odemeDurumu:'Ödendi',guncelleme:new Date().toISOString()});
+      await db.collection('kayitlar').doc(r.id).update({odemeDurumu:'Ödeme Tamamlandı',guncelleme:new Date().toISOString()});
     }
     showLd(false);toast(`${firma} tahsil edildi ✓`,'success');
   }catch(e){showLd(false);toast('Hata: '+e.message,'error');}
@@ -840,8 +868,8 @@ function getFirmaMap(){
     if(!m[d.firmaAdi])m[d.firmaAdi]={toplam:0,tahsil:0,bekleyen:0,iptal:0,say:0,temsilciler:new Set()};
     m[d.firmaAdi].say++;m[d.firmaAdi].toplam+=(d.tutar||0);
     if(d.temsilci)m[d.firmaAdi].temsilciler.add(d.temsilci);
-    if(d.odemeDurumu==='Ödendi')m[d.firmaAdi].tahsil+=(d.tutar||0);
-    else if(d.odemeDurumu==='Beklemede')m[d.firmaAdi].bekleyen+=(d.tutar||0);
+    if(normalizeStatus(d.odemeDurumu)==='Ödeme Tamamlandı')m[d.firmaAdi].tahsil+=(d.tutar||0);
+    else if(normalizeStatus(d.odemeDurumu)==='Tahsilat Bekliyor')m[d.firmaAdi].bekleyen+=(d.tutar||0);
     else m[d.firmaAdi].iptal+=(d.tutar||0);
   });
   return m;
@@ -903,8 +931,8 @@ function getTemMap(){
     if(!m[d.temsilci])m[d.temsilci]={toplam:0,tahsil:0,bekleyen:0,say:0,firmalar:new Set()};
     m[d.temsilci].say++;m[d.temsilci].toplam+=(d.tutar||0);
     if(d.firmaAdi)m[d.temsilci].firmalar.add(d.firmaAdi);
-    if(d.odemeDurumu==='Ödendi')m[d.temsilci].tahsil+=(d.tutar||0);
-    else if(d.odemeDurumu==='Beklemede')m[d.temsilci].bekleyen+=(d.tutar||0);
+    if(normalizeStatus(d.odemeDurumu)==='Ödeme Tamamlandı')m[d.temsilci].tahsil+=(d.tutar||0);
+    else if(normalizeStatus(d.odemeDurumu)==='Tahsilat Bekliyor')m[d.temsilci].bekleyen+=(d.tutar||0);
   });
   return m;
 }
@@ -973,12 +1001,12 @@ function openModal(id){
   if(id){
     const r=data.find(d=>d.id===id);
     if(r){
-      sv('fMu',r.musteriAdi);sv('fFi',r.firmaAdi);sv('fTe',r.temsilci);
+      sv('fMu',r.musteriAdi);sv('fCa',r.cariNo);sv('fFi',r.firmaAdi);sv('fTe',r.temsilci);
       sv('fTu',r.tutar);sv('fIl',r.il);sv('fIlc',r.ilce);
       sv('fTar',r.tarih);sv('fNo',r.notlar);
-      // Durum: 'Ödendi', 'Beklemede', 'İptal' — value ile eşleştir
+      // Durum normalization
       const fDu=document.getElementById('fDu');
-      const dur=r.odemeDurumu||'Beklemede';
+      const dur=normalizeStatus(r.odemeDurumu||'Tahsilat Bekliyor');
       // Tüm option'ları kontrol et, value veya text eşleşiyor mu
       let found=false;
       for(let i=0;i<fDu.options.length;i++){
@@ -989,8 +1017,8 @@ function openModal(id){
       if(!found)fDu.selectedIndex=0;
     }
   }else{
-    ['fMu','fFi','fTe','fTu','fIl','fIlc','fNo'].forEach(i=>sv(i,''));
-    sv('fDu','Beklemede');sv('fTar',today());
+    ['fMu','fCa','fFi','fTe','fTu','fIl','fIlc','fNo'].forEach(i=>sv(i,''));
+    sv('fDu','Tahsilat Bekliyor');sv('fTar',today());
   }
   document.getElementById('kayitModal').classList.add('open');
 }
@@ -1201,6 +1229,42 @@ async function waShare(){
       },'image/jpeg',0.92);
     }catch{window.open(url,'_blank');}
   }else window.open(url,'_blank');
+}
+
+// ============ PASSWORD PROTECTION ============
+const PASSWORD='8554';
+let pendingTab=null;
+
+function requirePassword(tabIndex){
+  if(tabIndex!==2&&tabIndex!==3)return;
+  const pane=document.getElementById('p'+tabIndex);
+  if(pane.classList.contains('active'))return; // Already unlocked
+  pendingTab=tabIndex;
+  document.getElementById('passwordModal').style.display='flex';
+  setTimeout(()=>document.getElementById('pwInput').focus(),100);
+}
+
+function checkPassword(){
+  const pw=document.getElementById('pwInput').value;
+  if(pw===PASSWORD){
+    closePasswordModal();
+    goTab(pendingTab,document.querySelectorAll('.tab')[pendingTab]);
+    pendingTab=null;
+  }else{
+    toast('Şifre yanlış!','error');
+    document.getElementById('pwInput').value='';
+    document.getElementById('pwInput').focus();
+  }
+}
+
+function cancelPassword(){
+  closePasswordModal();
+  pendingTab=null;
+}
+
+function closePasswordModal(){
+  document.getElementById('passwordModal').style.display='none';
+  document.getElementById('pwInput').value='';
 }
 
 // ============ TABS ============
