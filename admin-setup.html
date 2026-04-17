@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fuar Takip - Admin Setup</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    body { 
+      background: #07111f; 
+      color: #dde5f0; 
+      font-family: 'Segoe UI', monospace; 
+      padding: 30px; 
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    h2 { color: #ffa940; margin-bottom: 20px; }
+    .log { 
+      background: #0d1d30; 
+      padding: 15px; 
+      border-radius: 8px; 
+      margin-top: 15px; 
+      border-left: 4px solid #60a5fa; 
+      white-space: pre-wrap; 
+      max-height: 400px; 
+      overflow-y: auto; 
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .success { border-left-color: #4ade80; }
+    .error { border-left-color: #f87171; }
+    .info { border-left-color: #60a5fa; }
+    button { 
+      background: #1565C0; 
+      color: white; 
+      padding: 10px 20px; 
+      border: none; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      margin-top: 15px;
+      margin-right: 10px;
+      font-weight: 700;
+    }
+    button:hover { background: #1976D2; }
+    .btn-danger { background: #b91c1c; }
+    .btn-danger:hover { background: #991b1b; }
+  </style>
+</head>
+<body>
+  <h2>🔧 Fuar Takip - Admin User Setup</h2>
+  <p>Firebase ve Firestore bağlantısını kontrol edin, admin user oluşturun/silin.</p>
+  
+  <button onclick="runSetup()">▶ Kontrol Et & Admin Oluştur</button>
+  <button class="btn-danger" onclick="deleteAdminUser()">✕ Admin Sil (Test)</button>
+  <button onclick="clearLog()">Clear Log</button>
+  
+  <div class="log info" id="log">Hazır...</div>
+
+  <script>
+    const config = {
+      apiKey: "AIzaSyDdw-BFHoJAuWkZnYW2hCBThA4D_WUuf0U",
+      authDomain: "fuar-takip-e42a1.firebaseapp.com",
+      projectId: "fuar-takip-e42a1",
+      storageBucket: "fuar-takip-e42a1.firebasestorage.app",
+      messagingSenderId: "466470969311",
+      appId: "1:466470969311:web:8257e5d4c2376235a72e6a"
+    };
+
+    const logEl = document.getElementById('log');
+    let db = null;
+
+    function log(msg, type = 'info') {
+      console.log(msg);
+      logEl.textContent += msg + '\n';
+      const parent = logEl.parentElement;
+      parent.classList.remove('success', 'error', 'info');
+      parent.classList.add(type);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function clearLog() {
+      logEl.textContent = 'Hazır...\n';
+      logEl.parentElement.classList.remove('error', 'success');
+      logEl.parentElement.classList.add('info');
+    }
+
+    async function runSetup() {
+      clearLog();
+      log('⏳ Firebase başlatılıyor...');
+      
+      try {
+        // Delete any existing Firebase instances
+        firebase.apps.forEach(app => app.delete());
+        
+        // Initialize Firebase
+        firebase.initializeApp(config);
+        db = firebase.firestore();
+        log('✅ Firebase başlatıldı\n', 'success');
+
+        // Check users collection
+        log('📋 Users collection kontrol ediliyor...');
+        const snapshot = await db.collection('users').get();
+        log(`Toplam ${snapshot.size} user bulundu:\n`);
+        
+        let adminFound = false;
+        snapshot.docs.forEach(doc => {
+          const user = doc.data();
+          log(`  • ${user.ad} (${user.rol})`);
+          if (user.ad === 'admin') adminFound = true;
+        });
+
+        if (adminFound) {
+          log('\n✅ Admin user zaten var! Giriş yapabilirsin.\n', 'success');
+          log('Giriş bilgileri:');
+          log('  Kullanıcı Adı: admin');
+          log('  Şifre: 8554', 'success');
+        } else {
+          log('\n⚠️  Admin user YOK. Oluşturuluyor...');
+          
+          const result = await db.collection('users').add({
+            ad: 'admin',
+            sifre: '8554',
+            rol: 'admin',
+            olusturma: new Date().toISOString()
+          });
+          
+          log(`✅ Admin user oluşturuldu!\n`, 'success');
+          log(`  ID: ${result.id}`);
+          log(`  Kullanıcı Adı: admin`);
+          log(`  Şifre: 8554`);
+          log(`  Rol: admin\n`);
+          log('Şimdi siteye gidip giriş yap!', 'success');
+        }
+        
+      } catch (err) {
+        log(`\n❌ HATA: ${err.message}`, 'error');
+        log(`${err.stack}`, 'error');
+        if (err.message.includes('Permission denied')) {
+          log('\nFirestore Kuralları Hatası!', 'error');
+          log('Firestore Console\'dan şu kuralı ayarla:', 'error');
+          log('match /users/{document=**} { allow read, write: if true; }', 'error');
+        }
+      }
+    }
+
+    async function deleteAdminUser() {
+      if (!db) {
+        clearLog();
+        log('⚠️  Önce "Kontrol Et" butonuna tıkla!', 'error');
+        return;
+      }
+      
+      if (!confirm('Admin user silenecek. Emin misin?')) return;
+      
+      clearLog();
+      log('⏳ Admin user siliniyor...');
+      
+      try {
+        const snapshot = await db.collection('users').where('ad', '==', 'admin').get();
+        
+        if (snapshot.empty) {
+          log('❌ Admin user bulunmadı!', 'error');
+          return;
+        }
+        
+        await db.collection('users').doc(snapshot.docs[0].id).delete();
+        log('✅ Admin user silindi!\n', 'success');
+        log('Yeni bir admin oluşturmak için "Kontrol Et" butonuna tıkla.', 'success');
+        
+      } catch (err) {
+        log(`❌ HATA: ${err.message}`, 'error');
+      }
+    }
+  </script>
+</body>
+</html>
