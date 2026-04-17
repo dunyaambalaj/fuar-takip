@@ -60,6 +60,11 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;mi
 .status-select:focus,.group-status-select:focus{border-color:var(--orange)}
 .status-select option,.group-status-select option{background:var(--surface);color:var(--text)}
 
+/* ============ ÇOKLU SEÇİM ============ */
+.bulk-actions-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);padding:10px 14px;border-radius:8px;border:1px solid var(--orange);margin-bottom:10px}
+.bulk-btns{display:flex;gap:6px;flex-wrap:wrap}
+.row-checkbox{width:16px;height:16px;cursor:pointer}
+
 /* ============ MASAÜSTÜ TABLO ============ */
 .tbl-wrap{overflow-x:auto;background:var(--card);border-radius:10px;border:1px solid var(--border)}
 table{width:100%;border-collapse:collapse;font-size:12px;min-width:680px}
@@ -283,11 +288,20 @@ tr:hover td{background:rgba(255,255,255,.025)}
         <input type="checkbox" id="groupByMusteri" onchange="renderTable()" style="width:auto;flex:none" checked> Müşteri Bazlı Grupla
       </label>
     </div>
+    <div id="bulkActionsBar" class="bulk-actions-bar" style="display:none">
+      <span id="selCount" style="font-size:12px">0 seçildi</span>
+      <div class="bulk-btns">
+        <button class="btn btn-yellow btn-xs" onclick="bulkCancel()">⏹ Tümünü İptal Et</button>
+        <button class="btn btn-danger btn-xs" onclick="bulkDelete()">🗑 Tümünü Sil</button>
+        <button class="btn btn-ghost btn-xs" onclick="clearSelection()">✕ Seçimi Kaldır</button>
+      </div>
+    </div>
 
     <!-- MASAÜSTÜ TABLO -->
     <div class="tbl-wrap" id="desktopTable">
       <table>
         <thead><tr>
+          <th style="width:30px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll()" style="width:auto"></th>
           <th onclick="doSort('musteriAdi')">Müşteri ⇅</th>
           <th onclick="doSort('firmaAdi')">Firma ⇅</th>
           <th onclick="doSort('temsilci')">Temsilci ⇅</th>
@@ -681,15 +695,17 @@ function renderTable(){
   document.getElementById('rowCount').textContent=rows.length+' kayıt ('+(grouped?'müşteri bazlı':'tek tek')+')';
   if(grouped){renderGrouped(rows);}else{renderFlat(rows);}
   renderMobList(rows);
+  updateBulkUI();
 }
 
 function renderFlat(rows){
-  document.getElementById('tbody').innerHTML=rows.map(r=>`<tr onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="cursor:pointer">
-    <td><strong>${esc(r.musteriAdi||'')} </strong></td>
-    <td>${esc(r.firmaAdi||'')} </td>
-    <td>${esc(r.temsilci||'–')}</td>
-    <td style="color:var(--muted)">${esc(r.il||'')}${r.ilce?'/'+esc(r.ilce):''}</td>
-    <td><strong>${fmt(r.tutar)}</strong></td>
+  document.getElementById('tbody').innerHTML=rows.map(r=>`<tr style="cursor:pointer">
+    <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-id="${r.id}" onchange="updateBulkUI()"></td>
+    <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')"><strong>${esc(r.musteriAdi||'')} </strong></td>
+    <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')">${esc(r.firmaAdi||'')} </td>
+    <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted)">${esc(r.temsilci||'–')}</td>
+    <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted)">${esc(r.il||'')}${r.ilce?'/'+esc(r.ilce):''}</td>
+    <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" ><strong>${fmt(r.tutar)}</strong></td>
     <td onclick="event.stopPropagation()"><select class="status-select" value="${r.odemeDurumu||'Tahsilat Bekliyor'}" onchange="updateRecStatus('${r.id}',this.value)"><option value="Tahsilat Bekliyor">⏳ Tahsilat Bekliyor</option><option value="Ödeme Tamamlandı">✓ Ödeme Tamamlandı</option><option value="İptal">✕ İptal</option></select></td>
     <td onclick="event.stopPropagation()"><div class="act">
       <button class="btn btn-ghost btn-xs" onclick="editRec('${r.id}')">✏</button>
@@ -716,6 +732,7 @@ function renderGrouped(rows){
     const ilRow=items[0];
     const durumVal=tamOdendi?'Ödeme Tamamlandı':(bekleyen>0?'Tahsilat Bekliyor':'İptal');
     html+=`<tr class="musteri-group-row">
+      <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox group-checkbox" data-musteri="${esc(musteri)}" onchange="toggleGroupCheckboxes(this)"></td>
       <td><strong>${esc(musteri)}</strong><br><span style="font-size:10px;color:var(--muted)">${items.length} alım · ${[...new Set(items.map(r=>r.firmaAdi).filter(Boolean))].length} firma</span></td>
       <td style="color:var(--muted)">${esc(ilRow.temsilci||'–')}</td>
       <td style="color:var(--muted)">${esc(ilRow.il||'')}${ilRow.ilce?'/'+esc(ilRow.ilce):''}</td>
@@ -723,6 +740,9 @@ function renderGrouped(rows){
       <td onclick="event.stopPropagation()"><select class="group-status-select" value="${durumVal}" onchange="updateGroupStatus('${esc(musteri)}',this.value)"><option value="Tahsilat Bekliyor">⏳ Tahsilat Bekliyor</option><option value="Ödeme Tamamlandı">✓ Ödeme Tamamlandı</option><option value="İptal">✕ İptal</option></select></td>
       <td onclick="event.stopPropagation()"><div class="act">
         <button class="btn btn-accent btn-xs" onclick="openMuDetail('${esc(musteri)}')">👁 Detay</button>
+        <button class="btn btn-ghost btn-xs" onclick="openModal()" title="Yeni alım ekle">+</button>
+      </div></td>
+    </tr>`;
         <button class="btn btn-ghost btn-xs" onclick="openModal()" title="Yeni alım ekle">+</button>
       </div></td>
     </tr>`;
@@ -881,6 +901,82 @@ async function updateGroupStatus(musteriAdi,newStatus){
     }
     toast(`${items.length} kayıt güncellendi ✓`,'success');
   }catch(e){toast('Hata: '+e.message,'error');}
+}
+
+// ============ ÇOKLU SEÇİM & TOPLU İŞLEMLER ============
+function updateBulkUI(){
+  const selected=document.querySelectorAll('.row-checkbox:checked').length;
+  const bar=document.getElementById('bulkActionsBar');
+  const selectAllCb=document.getElementById('selectAll');
+  document.getElementById('selCount').textContent=selected+' seçildi';
+  bar.style.display=selected>0?'flex':'none';
+  const allCbs=document.querySelectorAll('.row-checkbox');
+  const allRows=document.querySelectorAll('tbody tr:not(.musteri-group-row)').length;
+  selectAllCb.checked=selected===allRows&&allRows>0;
+}
+
+function toggleSelectAll(){
+  const checked=document.getElementById('selectAll').checked;
+  const cbs=document.querySelectorAll('.row-checkbox:not(.group-checkbox)');
+  cbs.forEach(cb=>cb.checked=checked);
+  updateBulkUI();
+}
+
+function toggleGroupCheckboxes(groupCb){
+  // Group checkbox seçili/seçili değil. Bulkactions bar updateBulkUI tarafından gösterilir.
+  updateBulkUI();
+}
+
+function clearSelection(){
+  document.querySelectorAll('.row-checkbox').forEach(cb=>cb.checked=false);
+  document.getElementById('selectAll').checked=false;
+  updateBulkUI();
+}
+
+async function bulkCancel(){
+  // Flat mode: single row checkboxes; Grouped mode: group checkboxes
+  let ids=Array.from(document.querySelectorAll('.row-checkbox:checked:not(.group-checkbox)')).map(cb=>cb.getAttribute('data-id')).filter(Boolean);
+  // Group checkbox'ları kontrol et
+  const groupCbs=Array.from(document.querySelectorAll('.group-checkbox:checked')).map(cb=>cb.getAttribute('data-musteri'));
+  for(const musteri of groupCbs){
+    const grpIds=data.filter(d=>d.musteriAdi===musteri).map(d=>d.id);
+    ids.push(...grpIds);
+  }
+  ids=[...new Set(ids)];
+  if(!ids.length){toast('Kayıt seçiniz','error');return;}
+  if(!confirm(`${ids.length} kaydı iptal etmek istediğinize emin misiniz?`))return;
+  showLd(true);
+  try{
+    for(const id of ids){
+      await db.collection('kayitlar').doc(id).update({odemeDurumu:'İptal',guncelleme:new Date().toISOString()});
+    }
+    showLd(false);
+    toast(`${ids.length} kayıt iptal edildi ✓`,'success');
+    clearSelection();
+    renderAll();
+  }catch(e){showLd(false);toast('Hata: '+e.message,'error');}
+}
+
+async function bulkDelete(){
+  let ids=Array.from(document.querySelectorAll('.row-checkbox:checked:not(.group-checkbox)')).map(cb=>cb.getAttribute('data-id')).filter(Boolean);
+  const groupCbs=Array.from(document.querySelectorAll('.group-checkbox:checked')).map(cb=>cb.getAttribute('data-musteri'));
+  for(const musteri of groupCbs){
+    const grpIds=data.filter(d=>d.musteriAdi===musteri).map(d=>d.id);
+    ids.push(...grpIds);
+  }
+  ids=[...new Set(ids)];
+  if(!ids.length){toast('Kayıt seçiniz','error');return;}
+  if(!confirm(`${ids.length} kaydı silmek istediğinize emin misiniz? (Geri alınamaz!)`))return;
+  showLd(true);
+  try{
+    for(const id of ids){
+      await db.collection('kayitlar').doc(id).delete();
+    }
+    showLd(false);
+    toast(`${ids.length} kayıt silindi ✓`,'success');
+    clearSelection();
+    renderAll();
+  }catch(e){showLd(false);toast('Hata: '+e.message,'error');}
 }
 
 // ============ FİRMA TAB ============
