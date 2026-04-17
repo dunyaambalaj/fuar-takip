@@ -239,23 +239,47 @@ tr:hover td{background:rgba(255,255,255,.025)}
 <div class="ld" id="ld"><div class="spin"></div><div style="font-size:13px;color:var(--muted)">Firebase bağlanıyor...</div></div>
 <div class="toast" id="toast"></div>
 
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px">
+  <div class="modal" style="max-width:380px;position:relative;margin:0">
+    <div style="text-align:center;margin-bottom:20px">
+      <img id="loginLogo" src="" alt="" style="width:120px;height:auto;border-radius:8px;margin-bottom:12px">
+      <h2 style="font-size:18px;color:var(--text)">Dünya Ambalaj</h2>
+      <p style="font-size:13px;color:var(--muted)">Fuar Tahsilat Sistemi</p>
+    </div>
+    <div class="fgrp"><label>Şifre</label><input id="loginPass" type="password" placeholder="••••••" autocomplete="current-password" onkeypress="if(event.key==='Enter')doLogin()"></div>
+    <div class="m-acts" style="margin-top:16px;flex-direction:column;gap:8px">
+      <button class="btn btn-accent" onclick="doLogin()" style="width:100%">🔐 Giriş Yap</button>
+    </div>
+    <div id="loginError" style="display:none;margin-top:12px;padding:8px 12px;background:rgba(248,113,113,0.15);border:1px solid var(--red);border-radius:6px;color:var(--red);font-size:12px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- APP (hidden until authenticated) -->
+<div id="appMain" style="display:none">
+
 <!-- HEADER -->
 <div class="hdr">
   <img id="hdrLogo" src="" alt="">
   <div class="hdr-title">Dünya Ambalaj &ndash; <span>Fuar Tahsilat</span></div>
   <div class="fb-pill"><div class="dot" id="fbDot"></div><span id="fbTxt">Bağlanıyor…</span></div>
   <input type="file" id="xlsIn" accept=".xlsx,.xls,.csv" style="display:none" onchange="importExcel(this)">
-  <button class="btn btn-ghost" onclick="document.getElementById('xlsIn').click()">📥 Excel</button>
-  <button class="btn btn-ghost" onclick="exportExcel()">📤 Dışa Aktar</button>
-  <button class="btn btn-orange" onclick="openModal()">+ Yeni</button>
+  <button id="btnImport" class="btn btn-ghost" onclick="document.getElementById('xlsIn').click()">📥 Excel</button>
+  <button id="btnExport" class="btn btn-ghost" onclick="exportExcel()">📤 Dışa Aktar</button>
+  <button id="btnYeni" class="btn btn-orange" onclick="openModal()">+ Yeni</button>
+  <div style="display:flex;align-items:center;gap:8px;margin-left:8px">
+    <span id="userInfo" style="font-size:11px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+    <button class="btn btn-ghost btn-xs" onclick="doLogout()" title="Çıkış">🚪</button>
+  </div>
 </div>
 
 <!-- TABS -->
 <div class="tabs">
   <div class="tab active" onclick="goTab(0,this)">📋 Müşteriler</div>
-  <div class="tab" onclick="goTab(1,this)">🏢 Firmalar</div>
-  <div class="tab" onclick="goTab(2,this);requirePassword(2)">👤 Temsilciler</div>
-  <div class="tab" onclick="goTab(3,this);requirePassword(3)">⚙ Kurulum</div>
+  <div class="tab" id="tab1" onclick="goTab(1,this)">🏢 Firmalar</div>
+  <div class="tab" id="tab2" onclick="goTab(2,this)">👤 Temsilciler</div>
+  <div class="tab" id="tab3" onclick="goTab(3,this)">⚙ Kurulum</div>
+  <div class="tab" id="tabUsers" style="display:none" onclick="goTab(4,this)">👥 Kullanıcılar</div>
 </div>
 
 <div class="content">
@@ -385,7 +409,7 @@ service cloud.firestore {
       <div class="step"><div class="sn">2</div><div class="st"><strong>Excel İçe Aktarma:</strong> "📥 Excel" → .xlsx veya .csv seçin.<br>Sütunlar: musteriAdi | cariNo | firmaAdi | temsilci | il | ilce | tutar | odemeDurumu | tarih | notlar</div></div>
       <div class="step"><div class="sn">3</div><div class="st"><strong>Müşteri Bazlı Tahsilat:</strong> Müşteri satırına veya kartına tıklayın → Firma firma detay + Tümünü Tahsil Et butonu çıkar.</div></div>
       <div class="step"><div class="sn">4</div><div class="st"><strong>Mobil:</strong> Kart görünümü otomatik devreye girer. Kartlara tıklayarak müşteri detayına erişin.</div></div>
-      <div class="wbox">⚠ Herkese açık Firestore kuralları kullanıyor — URL'yi sadece güvendiğiniz kişilerle paylaşın.</div>
+      <div class="wbox">🔒 Şifre ile giriş koruması aktif — Kullanıcıları ⚙ Kullanıcılar sekmesinden yönetin.</div>
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
         <div style="font-size:12px;color:var(--muted);margin-bottom:9px">Farklı Firebase projesi:</div>
         <div class="fg" style="max-width:500px">
@@ -404,20 +428,33 @@ service cloud.firestore {
     </div>
   </div>
 
-</div><!-- /content -->
-
-<!-- PASSWORD MODAL -->
-<div class="overlay" id="passwordModal" style="display:none">
-  <div class="modal" style="max-width:320px">
-    <h2>🔒 Erişim Korumalı</h2>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Bu bölüme erişmek için şifreyi girin.</p>
-    <div class="fgrp"><label>Şifre</label><input id="pwInput" type="password" placeholder="" autocomplete="off" onkeypress="if(event.key==='Enter')checkPassword()"></div>
-    <div class="m-acts" style="margin-top:16px">
-      <button class="btn btn-ghost" onclick="cancelPassword()">İptal</button>
-      <button class="btn btn-accent" onclick="checkPassword()">Doğrula</button>
+  <!-- TAB 4: KULLANICILAR (admin only) -->
+  <div class="tab-pane" id="p4">
+    <div style="padding:16px">
+      <h3 style="color:var(--text);margin-bottom:16px">👥 Kullanıcı Yönetimi</h3>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-accent" onclick="showAddUserForm()">+ Yeni Kullanıcı</button>
+      </div>
+      <div id="addUserForm" style="display:none;background:var(--card);padding:16px;border-radius:8px;margin-bottom:16px;border:1px solid var(--border)">
+        <h4 style="color:var(--text);margin-bottom:12px">Yeni Kullanıcı Ekle</h4>
+        <div class="fg">
+          <div class="fgrp"><label>Kullanıcı Adı</label><input id="nuName" type="text" placeholder="Örn: Ahmet"></div>
+          <div class="fgrp"><label>Şifre</label><input id="nuPass" type="password" placeholder="Şifre girin"></div>
+          <div class="fgrp"><label>Rol</label><select id="nuRole"><option value="user">Kullanıcı</option><option value="admin">Yönetici</option></select></div>
+          <div class="fgrp"><label>Temsilci Eşleştir</label><input id="nuTemsilci" type="text" placeholder="Temsilci adı" list="nuTemsilciList"><datalist id="nuTemsilciList"></datalist></div>
+        </div>
+        <div class="m-acts" style="margin-top:12px">
+          <button class="btn btn-ghost" onclick="hideAddUserForm()">İptal</button>
+          <button class="btn btn-accent" onclick="addNewUser()">Kaydet</button>
+        </div>
+      </div>
+      <div id="usersList" style="display:grid;gap:8px"></div>
     </div>
   </div>
-</div>
+
+</div><!-- /content -->
+
+</div><!-- /appMain -->
 
 <!-- KAYIT MODAL (yeni/düzenle) -->
 <div class="overlay" id="kayitModal">
@@ -515,17 +552,14 @@ function initFB(cfg){
   try{
     if(!firebase||!firebase.apps){toast('Firebase kütüphaneleri yüklenmedi, lütfen sayfayı yenileyin','error');return;}
     showLd(true);
-    firebase.apps.forEach(a=>a.delete());
+    const defaultApp=firebase.apps.find(a=>a.name==='[DEFAULT]');
+    if(defaultApp)defaultApp.delete();
     firebase.initializeApp(cfg);
     db=firebase.firestore();
-    if(unsub){unsub();unsub=null;}
-    unsub=db.collection('kayitlar').orderBy('olusturma','desc').onSnapshot(snap=>{
-      data=snap.docs.map(d=>({id:d.id,...d.data()}));
-      showLd(false);setFBOK(true);
-      renderAll();
-      // Detay paneller açıksa güncelle
-      if(muRec)refreshMuDetail();
-    },err=>{showLd(false);setFBOK(false);toast('Firebase: '+err.message,'error');});
+    // Ensure default admin exists, then try auto-login
+    ensureDefaultAdmin().then(()=>tryAutoLogin()).then(loggedIn=>{
+      if(!loggedIn){showLd(false);}
+    });
   }catch(e){showLd(false);setFBOK(false);toast('FB init: '+e.message,'error');}
 }
 function setFBOK(ok){document.getElementById('fbDot').className='dot'+(ok?' on':'');document.getElementById('fbTxt').textContent=ok?'Canlı Bağlı':'Bağlı Değil';}
@@ -634,7 +668,11 @@ function importExcel(inp){
 }
 function exportExcel(){
   if(!data.length){toast('Veri yok','error');return;}
-  const rows=data.map(r=>({"Müşteri Adı":r.musteriAdi||'',"Müşteri Kodu":r.cariNo||'',"Firma Adı":r.firmaAdi||'',"Temsilci":r.temsilci||'',"İl":r.il||'',"İlçe":r.ilce||'',"Tutar":r.tutar||0,"Ödeme Durumu":r.odemeDurumu||'',"Tarih":r.tarih||'',"Notlar":r.notlar||''}));
+  let src=data;
+  if(currentUserRole!=='admin'&&currentUser&&currentUser.temsilci){
+    src=data.filter(d=>(d.temsilci||'')===currentUser.temsilci);
+  }
+  const rows=src.map(r=>({"Müşteri Adı":r.musteriAdi||'',"Müşteri Kodu":r.cariNo||'',"Firma Adı":r.firmaAdi||'',"Temsilci":r.temsilci||'',"İl":r.il||'',"İlçe":r.ilce||'',"Tutar":r.tutar||0,"Ödeme Durumu":r.odemeDurumu||'',"Tarih":r.tarih||'',"Notlar":r.notlar||''}));
   const ws=XLSX.utils.json_to_sheet(rows);
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Kayitlar');
   XLSX.writeFile(wb,'dunya_ambalaj_fuar_'+today()+'.xlsx');toast('Excel indirildi ✓','success');
@@ -658,12 +696,16 @@ function badgeW(d){
   return `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;background:${c[normalized]||c['Tahsilat Bekliyor']}">${esc(normalized||'Tahsilat Bekliyor')}</span>`;
 }
 function updateStats(){
-  const tot=data.reduce((s,d)=>s+(d.tutar||0),0);
-  const tah=data.filter(d=>normalizeStatus(d.odemeDurumu)==='Ödeme Tamamlandı').reduce((s,d)=>s+(d.tutar||0),0);
-  const bek=data.filter(d=>normalizeStatus(d.odemeDurumu)==='Tahsilat Bekliyor').reduce((s,d)=>s+(d.tutar||0),0);
-  const unik=[...new Set(data.map(d=>d.musteriAdi).filter(Boolean))];
-  const fir=[...new Set(data.map(d=>d.firmaAdi).filter(Boolean))];
-  const tem=[...new Set(data.map(d=>d.temsilci).filter(Boolean))];
+  let src=data;
+  if(currentUserRole!=='admin'&&currentUser&&currentUser.temsilci){
+    src=data.filter(d=>(d.temsilci||'')===currentUser.temsilci);
+  }
+  const tot=src.reduce((s,d)=>s+(d.tutar||0),0);
+  const tah=src.filter(d=>normalizeStatus(d.odemeDurumu)==='Ödeme Tamamlandı').reduce((s,d)=>s+(d.tutar||0),0);
+  const bek=src.filter(d=>normalizeStatus(d.odemeDurumu)==='Tahsilat Bekliyor').reduce((s,d)=>s+(d.tutar||0),0);
+  const unik=[...new Set(src.map(d=>d.musteriAdi).filter(Boolean))];
+  const fir=[...new Set(src.map(d=>d.firmaAdi).filter(Boolean))];
+  const tem=[...new Set(src.map(d=>d.temsilci).filter(Boolean))];
   document.getElementById('sUMusteri').textContent=unik.length;
   document.getElementById('sToplam').textContent=fmt(tot);
   document.getElementById('sTahsil').textContent=fmt(tah);
@@ -673,9 +715,13 @@ function updateStats(){
 }
 
 function updateFilters(){
-  const fir=[...new Set(data.map(d=>d.firmaAdi).filter(Boolean))].sort();
-  const tem=[...new Set(data.map(d=>d.temsilci).filter(Boolean))].sort();
-  const il=[...new Set(data.map(d=>d.il).filter(Boolean))].sort();
+  let src=data;
+  if(currentUserRole!=='admin'&&currentUser&&currentUser.temsilci){
+    src=data.filter(d=>(d.temsilci||'')===currentUser.temsilci);
+  }
+  const fir=[...new Set(src.map(d=>d.firmaAdi).filter(Boolean))].sort();
+  const tem=[...new Set(src.map(d=>d.temsilci).filter(Boolean))].sort();
+  const il=[...new Set(src.map(d=>d.il).filter(Boolean))].sort();
   updSel('ff',fir,'Tüm Firmalar');updSel('ft',tem,'Tüm Temsilciler');updSel('fi',il,'Tüm İller');
   updDL('fiList',fir);updDL('teList',tem);updDL('ilList',ILLER);
 }
@@ -689,6 +735,10 @@ function normalizeStatus(s){
 function getFiltered(){
   const a=normStr(v('fa')||''),fi=v('ff'),te=v('ft'),du=v('fd'),il=v('fi');
   let rows=[...data];
+  // Non-admin: only show records matching assigned temsilci
+  if(currentUserRole!=='admin'&&currentUser&&currentUser.temsilci){
+    rows=rows.filter(r=>(r.temsilci||'')===currentUser.temsilci);
+  }
   if(a)rows=rows.filter(r=>[r.musteriAdi,r.firmaAdi,r.temsilci,r.il,r.ilce].some(x=>normStr(x||'').includes(a)));
   if(fi)rows=rows.filter(r=>r.firmaAdi===fi);
   if(te)rows=rows.filter(r=>r.temsilci===te);
@@ -1363,40 +1413,245 @@ async function waShare(){
   }else window.open(url,'_blank');
 }
 
-// ============ PASSWORD PROTECTION ============
-const PASSWORD='8554';
-let pendingTab=null;
+// ============ AUTHENTICATION (password-only, Firestore-backed) ============
+let currentUser=null,currentUserRole=null;
 
-function requirePassword(tabIndex){
-  if(tabIndex!==2&&tabIndex!==3)return;
-  const pane=document.getElementById('p'+tabIndex);
-  if(pane.classList.contains('active'))return; // Already unlocked
-  pendingTab=tabIndex;
-  document.getElementById('passwordModal').style.display='flex';
-  setTimeout(()=>document.getElementById('pwInput').focus(),100);
+async function hashPass(pw){
+  const enc=new TextEncoder().encode(pw);
+  const buf=await crypto.subtle.digest('SHA-256',enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-function checkPassword(){
-  const pw=document.getElementById('pwInput').value;
-  if(pw===PASSWORD){
-    closePasswordModal();
-    goTab(pendingTab,document.querySelectorAll('.tab')[pendingTab]);
-    pendingTab=null;
-  }else{
-    toast('Şifre yanlış!','error');
-    document.getElementById('pwInput').value='';
-    document.getElementById('pwInput').focus();
+function showLoginError(msg){
+  const el=document.getElementById('loginError');
+  el.textContent=msg;el.style.display='';
+}
+
+async function ensureDefaultAdmin(){
+  // Migrate old format users (sifre→password, ad→displayName, rol→role) or create default admin
+  try{
+    const snap=await db.collection('users').get();
+    if(snap.empty){
+      // No users at all — create default admin
+      const h=await hashPass('8554');
+      await db.collection('users').add({
+        displayName:'Admin',password:h,role:'admin',
+        createdAt:new Date().toISOString()
+      });
+      return;
+    }
+    // Migrate old-format docs (have 'sifre' field instead of 'password')
+    for(const doc of snap.docs){
+      const d=doc.data();
+      if(d.sifre&&!d.password){
+        const h=await hashPass(d.sifre);
+        await db.collection('users').doc(doc.id).update({
+          password:h,
+          displayName:d.ad||d.displayName||'Admin',
+          role:d.rol||d.role||'admin',
+          createdAt:d.olusturma||d.createdAt||new Date().toISOString(),
+          sifre:firebase.firestore.FieldValue.delete(),
+          ad:firebase.firestore.FieldValue.delete(),
+          rol:firebase.firestore.FieldValue.delete(),
+          olusturma:firebase.firestore.FieldValue.delete()
+        });
+      }
+    }
+  }catch(e){console.error('ensureDefaultAdmin error:',e);}
+}
+
+async function doLogin(){
+  const pass=document.getElementById('loginPass').value;
+  if(!pass){showLoginError('Şifre girin.');return;}
+  try{
+    showLd(true);
+    document.getElementById('loginError').style.display='none';
+    const h=await hashPass(pass);
+    const snap=await db.collection('users').where('password','==',h).limit(1).get();
+    if(snap.empty){
+      showLd(false);
+      showLoginError('Şifre yanlış.');
+      document.getElementById('loginPass').value='';
+      return;
+    }
+    const userDoc=snap.docs[0];
+    const userData=userDoc.data();
+    currentUser={uid:userDoc.id,...userData};
+    currentUserRole=userData.role||'user';
+    sessionStorage.setItem('fuar_session',userDoc.id);
+    onLoginSuccess();
+  }catch(e){
+    showLd(false);
+    showLoginError('Giriş hatası: '+e.message);
   }
 }
 
-function cancelPassword(){
-  closePasswordModal();
-  pendingTab=null;
+function doLogout(){
+  currentUser=null;currentUserRole=null;
+  sessionStorage.removeItem('fuar_session');
+  if(unsub){unsub();unsub=null;}
+  data=[];
+  document.getElementById('appMain').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').style.display='none';
+  showLd(false);
 }
 
-function closePasswordModal(){
-  document.getElementById('passwordModal').style.display='none';
-  document.getElementById('pwInput').value='';
+function onLoginSuccess(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appMain').style.display='';
+  document.getElementById('userInfo').textContent=currentUser.displayName||'Kullanıcı';
+  const isAdmin=currentUserRole==='admin';
+  document.getElementById('tabUsers').style.display=isAdmin?'':'none';
+  document.getElementById('tab1').style.display=isAdmin?'':'none';
+  document.getElementById('tab2').style.display=isAdmin?'':'none';
+  document.getElementById('tab3').style.display=isAdmin?'':'none';
+  document.getElementById('btnImport').style.display=isAdmin?'':'none';
+  document.getElementById('btnYeni').style.display=isAdmin?'':'none';
+  showLd(false);
+  startFirestoreListener();
+}
+
+async function tryAutoLogin(){
+  const uid=sessionStorage.getItem('fuar_session');
+  if(!uid)return false;
+  try{
+    const doc=await db.collection('users').doc(uid).get();
+    if(!doc.exists){sessionStorage.removeItem('fuar_session');return false;}
+    currentUser={uid:doc.id,...doc.data()};
+    currentUserRole=doc.data().role||'user';
+    onLoginSuccess();
+    return true;
+  }catch(e){return false;}
+}
+
+function startFirestoreListener(){
+  if(unsub){unsub();unsub=null;}
+  unsub=db.collection('kayitlar')
+    .orderBy('olusturma','desc')
+    .onSnapshot(snap=>{
+      data=snap.docs.map(d=>({id:d.id,...d.data()}));
+      showLd(false);setFBOK(true);renderAll();
+      if(muRec)refreshMuDetail();
+    },err=>{
+      showLd(false);setFBOK(false);
+      toast('Firebase: '+err.message,'error');
+    });
+}
+
+// ============ USER MANAGEMENT (Admin) ============
+function showAddUserForm(){
+  document.getElementById('addUserForm').style.display='';
+  const temList=[...new Set(data.map(d=>d.temsilci).filter(Boolean))].sort();
+  updDL('nuTemsilciList',temList);
+}
+function hideAddUserForm(){document.getElementById('addUserForm').style.display='none';document.getElementById('nuName').value='';document.getElementById('nuPass').value='';document.getElementById('nuRole').value='user';document.getElementById('nuTemsilci').value='';}
+
+async function addNewUser(){
+  if(currentUserRole!=='admin'){toast('Yetkiniz yok!','error');return;}
+  const name=document.getElementById('nuName').value.trim();
+  const pass=document.getElementById('nuPass').value;
+  const role=document.getElementById('nuRole').value;
+  const temsilci=document.getElementById('nuTemsilci').value.trim();
+  if(!name||!pass){toast('Ad ve şifre gerekli!','error');return;}
+  try{
+    showLd(true);
+    const h=await hashPass(pass);
+    // Check if same password already exists
+    const existing=await db.collection('users').where('password','==',h).get();
+    if(!existing.empty){showLd(false);toast('Bu şifre zaten başka bir kullanıcıda kullanılıyor!','error');return;}
+    await db.collection('users').add({
+      displayName:name,password:h,role:role,temsilci:temsilci,
+      createdAt:new Date().toISOString(),createdBy:currentUser.uid
+    });
+    showLd(false);
+    hideAddUserForm();
+    toast('Kullanıcı eklendi ✓','success');
+    renderUsersList();
+  }catch(e){showLd(false);toast('Hata: '+e.message,'error');}
+}
+
+async function deleteUser(uid,name){
+  if(currentUserRole!=='admin'){toast('Yetkiniz yok!','error');return;}
+  if(uid===currentUser.uid){toast('Kendinizi silemezsiniz!','error');return;}
+  if(!confirm('"'+name+'" kullanıcısını silmek istediğinize emin misiniz?'))return;
+  try{
+    showLd(true);
+    await db.collection('users').doc(uid).delete();
+    showLd(false);
+    toast('Kullanıcı silindi ✓','success');
+    renderUsersList();
+  }catch(e){showLd(false);toast('Hata: '+e.message,'error');}
+}
+
+async function changeUserRole(uid,newRole){
+  if(currentUserRole!=='admin'){toast('Yetkiniz yok!','error');return;}
+  if(uid===currentUser.uid){toast('Kendi rolünüzü değiştiremezsiniz!','error');return;}
+  try{
+    await db.collection('users').doc(uid).update({role:newRole});
+    toast('Rol güncellendi ✓','success');
+    renderUsersList();
+  }catch(e){toast('Hata: '+e.message,'error');}
+}
+
+async function resetUserPassword(uid,name){
+  if(currentUserRole!=='admin'){toast('Yetkiniz yok!','error');return;}
+  const newPass=prompt('"'+name+'" için yeni şifre girin:');
+  if(!newPass)return;
+  try{
+    const h=await hashPass(newPass);
+    const existing=await db.collection('users').where('password','==',h).get();
+    if(!existing.empty&&existing.docs[0].id!==uid){toast('Bu şifre zaten başka bir kullanıcıda kullanılıyor!','error');return;}
+    await db.collection('users').doc(uid).update({password:h});
+    toast('Şifre güncellendi ✓','success');
+  }catch(e){toast('Hata: '+e.message,'error');}
+}
+
+async function renderUsersList(){
+  if(currentUserRole!=='admin')return;
+  // Update temsilci datalist in add form
+  const temList=[...new Set(data.map(d=>d.temsilci).filter(Boolean))].sort();
+  updDL('nuTemsilciList',temList);
+  try{
+    const snap=await db.collection('users').orderBy('createdAt','desc').get();
+    const el=document.getElementById('usersList');
+    if(snap.empty){el.innerHTML='<p style="color:var(--muted)">Kayıtlı kullanıcı yok.</p>';return;}
+    const temOpts=temList.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+    el.innerHTML=snap.docs.map(d=>{
+      const u=d.data();
+      const isMe=d.id===currentUser.uid;
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px">
+          <div style="font-weight:600;color:var(--text)">${esc(u.displayName||'–')}${isMe?' <span style="font-size:10px;color:var(--green)">(siz)</span>':''}</div>
+          <div style="font-size:11px;color:var(--muted)">Rol: ${u.role==='admin'?'🔑 Yönetici':'👤 Kullanıcı'}</div>
+          <div style="font-size:11px;color:${u.temsilci?'var(--blue)':'var(--muted)'}">Temsilci: ${u.temsilci?esc(u.temsilci):'<em>atanmamış</em>'}</div>
+          <div style="font-size:11px;color:var(--muted)">Kayıt: ${u.createdAt?new Date(u.createdAt).toLocaleDateString('tr-TR'):'-'}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <select style="padding:4px 8px;border-radius:4px;background:var(--surface);color:var(--text);border:1px solid var(--border);font-size:12px" ${isMe?'disabled':''} onchange="changeUserRole('${d.id}',this.value)">
+            <option value="user"${u.role==='user'?' selected':''}>Kullanıcı</option>
+            <option value="admin"${u.role==='admin'?' selected':''}>Yönetici</option>
+          </select>
+          <select style="padding:4px 8px;border-radius:4px;background:var(--surface);color:var(--blue);border:1px solid var(--border);font-size:12px" onchange="changeUserTemsilci('${d.id}',this.value)">
+            <option value="">Temsilci Seç</option>
+            ${temOpts.replace(new RegExp('value="'+esc(u.temsilci||'')+'"'),'value="'+esc(u.temsilci||'')+'" selected')}
+          </select>
+          <button class="btn btn-ghost btn-xs" onclick="resetUserPassword('${d.id}','${esc(u.displayName||'')}')">🔑</button>
+          ${isMe?'':`<button class="btn btn-danger btn-xs" onclick="deleteUser('${d.id}','${esc(u.displayName||'')}')">✕</button>`}
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){document.getElementById('usersList').innerHTML='<p style="color:var(--red)">Hata: '+esc(e.message)+'</p>';}
+}
+
+async function changeUserTemsilci(uid,temsilci){
+  if(currentUserRole!=='admin'){toast('Yetkiniz yok!','error');return;}
+  try{
+    await db.collection('users').doc(uid).update({temsilci:temsilci});
+    toast('Temsilci atandı ✓','success');
+    renderUsersList();
+  }catch(e){toast('Hata: '+e.message,'error');}
 }
 
 // ============ TABS ============
@@ -1404,6 +1659,7 @@ function goTab(i,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');document.getElementById('p'+i).classList.add('active');
+  if(i===4)renderUsersList();
 }
 
 // ============ FIREBASE OVERRIDE ============
@@ -1422,6 +1678,7 @@ function showLd(s){document.getElementById('ld').className='ld'+(s?' show':'');}
 // ============ INIT ============
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('hdrLogo').src=LOGO;
+  document.getElementById('loginLogo').src=LOGO;
   document.getElementById('bdLogo').src=LOGO;
   document.getElementById('kayitModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
   document.getElementById('bdOverlay').addEventListener('click',function(e){if(e.target===this)closeBd();});
