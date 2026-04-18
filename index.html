@@ -333,6 +333,7 @@ tr:hover td{background:rgba(255,255,255,.025)}
           <th onclick="doSort('il')">İl/İlçe ⇅</th>
           <th onclick="doSort('tutar')">Tutar ⇅</th>
           <th onclick="doSort('odemeDurumu')">Durum ⇅</th>
+          <th onclick="doSort('konaklama')">Konaklama ⇅</th>
           <th id="thTarih" onclick="doSort('tarih')">Tarih ⇅</th>
           <th>İşlemler</th>
         </tr></thead>
@@ -474,6 +475,11 @@ service cloud.firestore {
           <option value="Ödeme Tamamlandı">Ödeme Tamamlandı</option>
           <option value="İptal">İptal</option>
         </select></div>
+      <div class="fgrp"><label>Konaklama</label>
+        <select id="fKo">
+          <option value="Hayır">Hayır</option>
+          <option value="Evet">Evet</option>
+        </select></div>
       <div class="fgrp"><label>Tarih</label><input id="fTar" type="date"></div>
       <div class="fgrp full"><label>Notlar</label><textarea id="fNo" placeholder="Ek bilgi…"></textarea></div>
     </div>
@@ -569,7 +575,7 @@ async function saveRecord(){
   if(!db){toast('Firebase bağlı değil!','error');return;}
   const mu=v('fMu'),fi=v('fFi');
   if(!mu||!fi){toast('Müşteri Adı ve Firma zorunlu!','error');return;}
-  const rec={musteriAdi:mu,cariNo:v('fCa'),firmaAdi:fi,temsilci:v('fTe'),tutar:parseFloat(v('fTu'))||0,il:v('fIl'),ilce:v('fIlc'),odemeDurumu:v('fDu')||'Tahsilat Bekliyor',tarih:v('fTar')||today(),notlar:v('fNo'),guncelleme:new Date().toISOString()};
+  const rec={musteriAdi:mu,cariNo:v('fCa'),firmaAdi:fi,temsilci:v('fTe'),tutar:parseFloat(v('fTu'))||0,il:v('fIl'),ilce:v('fIlc'),odemeDurumu:v('fDu')||'Tahsilat Bekliyor',konaklama:v('fKo')||'Hayır',tarih:v('fTar')||today(),notlar:v('fNo'),guncelleme:new Date().toISOString()};
   try{
     if(editId){await db.collection('kayitlar').doc(editId).update(rec);toast('Güncellendi ✓','success');}
     else{await db.collection('kayitlar').add({...rec,olusturma:new Date().toISOString()});toast('Eklendi ✓','success');}
@@ -633,13 +639,14 @@ function importExcel(inp){
         'durum':'odemeDurumu','odemedurum':'odemeDurumu','odeme':'odemeDurumu','odemedurumu':'odemeDurumu','odemtamamlandi':'odemeDurumu',
         'tarih':'tarih','date':'tarih',
         'notlar':'notlar','not':'notlar','aciklama':'notlar','notes':'notlar',
-        'carino':'cariNo','carinos':'cariNo','musterikodu':'cariNo','musterikod':'cariNo','kod':'cariNo','code':'cariNo','musterino':'cariNo'
+        'carino':'cariNo','carinos':'cariNo','musterikodu':'cariNo','musterikod':'cariNo','kod':'cariNo','code':'cariNo','musterino':'cariNo',
+        'konaklama':'konaklama'
       };
       let cnt=0;showLd(true);
       for(const row of data){
         if(!row||typeof row!=='object')continue;
         if(!Object.values(row).some(v=>String(v).trim()))continue;
-        const rec={musteriAdi:'',firmaAdi:'',temsilci:'',il:'',ilce:'',tutar:0,odemeDurumu:'Tahsilat Bekliyor',cariNo:'',tarih:today(),notlar:'',olusturma:new Date().toISOString(),guncelleme:new Date().toISOString()};
+        const rec={musteriAdi:'',firmaAdi:'',temsilci:'',il:'',ilce:'',tutar:0,odemeDurumu:'Tahsilat Bekliyor',konaklama:'Hayır',cariNo:'',tarih:today(),notlar:'',olusturma:new Date().toISOString(),guncelleme:new Date().toISOString()};
         for(const [key,val] of Object.entries(row)){
           const field=map[normStr(key)];
           if(!field||!rec.hasOwnProperty(field))continue;
@@ -772,6 +779,7 @@ function renderFlat(rows){
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted)">${esc(r.il||'')}${r.ilce?'/'+esc(r.ilce):''}</td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" ><strong>${fmt(r.tutar)}</strong></td>
     <td onclick="event.stopPropagation()"><select class="status-select" onchange="updateRecStatus('${r.id}',this.value)"><option value="Tahsilat Bekliyor" ${normalizeStatus(r.odemeDurumu||'Tahsilat Bekliyor')==='Tahsilat Bekliyor'?'selected':''}>⏳ Tahsilat Bekliyor</option><option value="Ödeme Tamamlandı" ${normalizeStatus(r.odemeDurumu||'Tahsilat Bekliyor')==='Ödeme Tamamlandı'?'selected':''}>✓ Ödeme Tamamlandı</option><option value="İptal" ${normalizeStatus(r.odemeDurumu||'Tahsilat Bekliyor')==='İptal'?'selected':''}>✕ İptal</option></select></td>
+    <td onclick="event.stopPropagation()"><select class="status-select" onchange="updateKonaklama('${r.id}',this.value)"><option value="Hayır" ${(r.konaklama||'Hayır')==='Hayır'?'selected':''}>Hayır</option><option value="Evet" ${(r.konaklama||'Hayır')==='Evet'?'selected':''}>Evet</option></select></td>
     <td onclick="openMuDetail('${esc(r.musteriAdi||'')}')" style="color:var(--muted);white-space:nowrap">${esc(r.tarih||'–')}</td>
     <td onclick="event.stopPropagation()"><div class="act">
       <button class="btn btn-ghost btn-xs" onclick="editRec('${r.id}')">✏</button>
@@ -806,6 +814,7 @@ function renderGrouped(rows){
       <td style="color:var(--muted)">${esc(ilRow.il||'')}${ilRow.ilce?'/'+esc(ilRow.ilce):''}</td>
       <td><strong>${fmt(toplam)}</strong>${bekleyen>0?`<br><span style="font-size:10px;color:var(--yellow)">⏳ ${fmt(bekleyen)}</span>`:''}</td>
       <td onclick="event.stopPropagation()"><select class="group-status-select" onchange="updateGroupStatus('${esc(musteri)}',this.value)"><option value="Tahsilat Bekliyor" ${durumVal==='Tahsilat Bekliyor'?'selected':''}>⏳ Tahsilat Bekliyor</option><option value="Ödeme Tamamlandı" ${durumVal==='Ödeme Tamamlandı'?'selected':''}>✓ Ödeme Tamamlandı</option><option value="İptal" ${durumVal==='İptal'?'selected':''}>✕ İptal</option></select></td>
+      <td onclick="event.stopPropagation()"><select class="status-select" onchange="updateGroupKonaklama('${esc(musteri)}',this.value)"><option value="Hayır" ${(ilRow.konaklama||'Hayır')==='Hayır'?'selected':''}>Hayır</option><option value="Evet" ${(ilRow.konaklama||'Hayır')==='Evet'?'selected':''}>Evet</option></select></td>
       <td onclick="event.stopPropagation()"><div class="act">
         <button class="btn btn-accent btn-xs" onclick="openMuDetail('${esc(musteri)}')">👁 Detay</button>
         <button class="btn btn-ghost btn-xs" onclick="openModal()" title="Yeni alım ekle">+</button>
@@ -851,6 +860,7 @@ function renderMobList(rows){
         <div class="mob-meta-item"><div class="mob-meta-label">İl</div><div class="mob-meta-val">${esc(ilRow.il||'–')}</div></div>
         <div class="mob-meta-item"><div class="mob-meta-label">Firma Sayısı</div><div class="mob-meta-val">${firmalar.length}</div></div>
         <div class="mob-meta-item"><div class="mob-meta-label">Alım Sayısı</div><div class="mob-meta-val">${items.length}</div></div>
+        <div class="mob-meta-item"><div class="mob-meta-label">Konaklama</div><div class="mob-meta-val">${esc(ilRow.konaklama||'Hayır')}</div></div>
       </div>
       <div class="mob-card-acts" onclick="event.stopPropagation()">
         <button class="btn btn-accent" onclick="openMuDetail('${esc(musteri)}')">👁 Detay & Tahsilat</button>
@@ -970,6 +980,31 @@ async function updateGroupStatus(musteriAdi,newStatus){
     }
     renderTable();
     toast(`${items.length} kayıt güncellendi ✓`,'success');
+  }catch(e){toast('Hata: '+e.message,'error');}
+}
+
+async function updateKonaklama(recId,newVal){
+  if(!db)return;
+  try{
+    await db.collection('kayitlar').doc(recId).update({konaklama:newVal,guncelleme:new Date().toISOString()});
+    const rec=data.find(d=>d.id===recId);
+    if(rec)rec.konaklama=newVal;
+    renderTable();
+    toast('Konaklama güncellendi ✓','success');
+  }catch(e){toast('Hata: '+e.message,'error');}
+}
+
+async function updateGroupKonaklama(musteriAdi,newVal){
+  if(!db)return;
+  const items=data.filter(d=>d.musteriAdi===musteriAdi);
+  if(!items.length)return;
+  try{
+    for(const r of items){
+      await db.collection('kayitlar').doc(r.id).update({konaklama:newVal,guncelleme:new Date().toISOString()});
+      r.konaklama=newVal;
+    }
+    renderTable();
+    toast(`${items.length} kayıt konaklama güncellendi ✓`,'success');
   }catch(e){toast('Hata: '+e.message,'error');}
 }
 
@@ -1192,7 +1227,7 @@ function openModal(id){
     if(r){
       sv('fMu',r.musteriAdi);sv('fCa',r.cariNo);sv('fFi',r.firmaAdi);sv('fTe',r.temsilci);
       sv('fTu',r.tutar);sv('fIl',r.il);sv('fIlc',r.ilce);
-      sv('fTar',r.tarih);sv('fNo',r.notlar);
+      sv('fTar',r.tarih);sv('fNo',r.notlar);sv('fKo',r.konaklama||'Hayır');
       // Durum normalization
       const fDu=document.getElementById('fDu');
       const dur=normalizeStatus(r.odemeDurumu||'Tahsilat Bekliyor');
@@ -1207,7 +1242,7 @@ function openModal(id){
     }
   }else{
     ['fMu','fCa','fFi','fTe','fTu','fIl','fIlc','fNo'].forEach(i=>sv(i,''));
-    sv('fDu','Tahsilat Bekliyor');sv('fTar',today());
+    sv('fDu','Tahsilat Bekliyor');sv('fKo','Hayır');sv('fTar',today());
   }
   document.getElementById('kayitModal').classList.add('open');
 }
